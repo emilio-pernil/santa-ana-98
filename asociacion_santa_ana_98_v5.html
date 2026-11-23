@@ -1,0 +1,3433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#3b0a14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Santa Ana-98" />
+  <title>Asociación Santa Ana-98 · Cuentas y Presupuestos</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          },
+          colors: {
+            granate: {
+              50: '#fdf2f4',
+              100: '#fbe2e7',
+              200: '#f8c6d1',
+              700: '#6e1125',
+              800: '#530b1b',
+              900: '#3b0a14',
+              950: '#24050b',
+            },
+            oro: {
+              200: '#fde68a',
+              300: '#fcd34d',
+              400: '#fbbf24',
+              500: '#d4af37',
+              600: '#b48e22',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- jsPDF y jsPDF-AutoTable para generación de informe PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- Tipografía Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --sat: env(safe-area-inset-top, 0px);
+      --sab: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overscroll-behavior-y: contain;
+    }
+
+    .safe-top {
+      padding-top: max(12px, var(--sat));
+    }
+
+    .safe-bottom {
+      padding-bottom: max(10px, var(--sab));
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade {
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-stone-100 text-stone-900 dark:bg-granate-950 dark:text-stone-100 antialiased selection:bg-oro-500/25">
+
+  <div id="app" class="min-h-screen flex flex-col max-w-4xl mx-auto bg-stone-50 dark:bg-granate-900/60 shadow-2xl relative border-x border-stone-200 dark:border-granate-800">
+
+    <!-- Cabecera superior en tonos granate / oro -->
+    <header class="sticky top-0 z-30 safe-top bg-gradient-to-r from-granate-950 via-granate-900 to-granate-950 text-white border-b border-oro-500/35 px-4 pb-3 shadow-md">
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-oro-300 via-oro-500 to-oro-600 text-granate-950 font-extrabold flex items-center justify-center shadow-inner border border-oro-200/60 shrink-0 text-xs tracking-tight">
+            SA98
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-bold text-sm sm:text-base tracking-tight text-oro-200 truncate">
+              Asociación Santa Ana-98 · Cuentas y Presupuestos
+            </h1>
+            <p id="sync-status-text" class="text-[11px] text-stone-300 truncate">
+              Base desde cero · Caché local activa
+            </p>
+          </div>
+        </div>
+
+        <!-- Botones de sincronización entre móvil y portátil + tema -->
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button
+            id="btn-config-sync"
+            type="button"
+            onclick="openSyncConfigModal()"
+            title="Configurar datos de conexión Supabase"
+            class="p-2 rounded-xl bg-granate-800 hover:bg-granate-700 active:scale-95 text-oro-200 border border-oro-500/30 text-xs font-bold flex items-center justify-center transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+
+          <button
+            id="btn-pull-sync"
+            type="button"
+            onclick="pullFromSupabase(false)"
+            title="Descargar datos desde Supabase"
+            class="px-2.5 py-2 rounded-xl bg-granate-800 hover:bg-granate-700 active:scale-95 text-oro-200 border border-oro-500/30 text-xs font-bold flex items-center gap-1 transition">
+            <span>↓ Sync</span>
+          </button>
+
+          <button
+            id="btn-push-sync"
+            type="button"
+            onclick="pushToSupabase(false)"
+            title="Publicar datos a Supabase"
+            class="px-2.5 py-2 rounded-xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 active:scale-95 text-granate-950 text-xs font-extrabold flex items-center gap-1 shadow transition">
+            <span>↑ Publicar</span>
+          </button>
+
+          <button
+            id="btn-theme"
+            type="button"
+            onclick="toggleTheme()"
+            title="Cambiar modo claro/oscuro"
+            class="p-2 rounded-xl bg-granate-800 hover:bg-granate-700 active:scale-95 text-oro-200 border border-oro-500/25 transition">
+            <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Aviso en pantalla (sin alert/confirm) -->
+    <div id="toast-banner" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md pointer-events-none hidden">
+      <div id="toast-inner" class="px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 bg-granate-950 text-oro-200 border-oro-500/40">
+        <span id="toast-message"></span>
+      </div>
+    </div>
+
+    <!-- Área de contenido de la pestaña activa -->
+    <main id="main-content" class="flex-1 px-4 pt-4 pb-24 space-y-4 overflow-x-hidden"></main>
+
+    <!-- Navegación inferior con las 4 pestañas exactas -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl z-30 safe-bottom bg-white/95 dark:bg-granate-950/95 backdrop-blur border-t border-stone-200 dark:border-oro-500/25 px-2 pt-1.5">
+      <div class="grid grid-cols-4 gap-1">
+        <button type="button" data-tab-btn="cuentas" onclick="switchTab('cuentas')" class="nav-tab-btn py-2 px-1 rounded-2xl transition flex flex-col items-center justify-center gap-0.5 text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span class="text-[11px] leading-tight truncate max-w-full">Cuentas</span>
+        </button>
+
+        <button type="button" data-tab-btn="movimientos" onclick="switchTab('movimientos')" class="nav-tab-btn py-2 px-1 rounded-2xl transition flex flex-col items-center justify-center gap-0.5 text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span class="text-[11px] leading-tight truncate max-w-full">Movimientos</span>
+        </button>
+
+        <button type="button" data-tab-btn="informes" onclick="switchTab('informes')" class="nav-tab-btn py-2 px-1 rounded-2xl transition flex flex-col items-center justify-center gap-0.5 text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          <span class="text-[11px] leading-tight truncate max-w-full">Informes y gráficas</span>
+        </button>
+
+        <button type="button" data-tab-btn="previsiones" onclick="switchTab('previsiones')" class="nav-tab-btn py-2 px-1 rounded-2xl transition flex flex-col items-center justify-center gap-0.5 text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <span class="text-[11px] leading-tight truncate max-w-full">Previsiones y presupuestos</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Ventana modal emergente (edición de cuentas / partidas / formularios) -->
+  <div id="modal-backdrop" class="fixed inset-0 z-50 bg-granate-950/80 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-4 pb-16 sm:pb-4">
+    <div id="modal-panel" class="w-full max-w-2xl bg-white dark:bg-granate-950 rounded-3xl border border-stone-200 dark:border-oro-500/35 shadow-2xl max-h-[82vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-fade mb-2 sm:mb-0">
+      <div class="px-5 py-4 border-b border-stone-200 dark:border-granate-800 flex items-center justify-between gap-3 bg-granate-900 text-oro-200">
+        <h3 id="modal-title" class="font-bold text-sm sm:text-base truncate"></h3>
+        <button type="button" onclick="closeModal()" class="p-2 rounded-xl bg-granate-800 hover:bg-granate-700 text-oro-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="modal-body" class="p-5 pb-6 overflow-y-auto space-y-4 flex-1"></div>
+    </div>
+  </div>
+
+  <!-- Ventana emergente propia para visor PDF y envío por WhatsApp -->
+  <div id="pdf-popup-window" class="fixed inset-0 z-[60] bg-granate-950/90 hidden items-center justify-center p-2 sm:p-4">
+    <div class="w-full max-w-3xl h-[88vh] bg-white dark:bg-granate-950 rounded-3xl border-2 border-oro-500/50 shadow-2xl flex flex-col overflow-hidden animate-fade">
+      <div class="px-4 py-3 bg-granate-950 text-oro-200 border-b border-oro-500/35 flex items-center justify-between gap-2 flex-wrap">
+        <div class="min-w-0">
+          <p id="pdf-popup-title" class="font-extrabold text-xs sm:text-sm truncate">Visor PDF · Santa Ana-98</p>
+          <p id="pdf-popup-subtitle" class="text-[10px] text-stone-300 truncate">Ventana emergente del visor de documentos</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="pdf-popup-whatsapp-btn" type="button" onclick="shareLastGeneratedPdfOnWhatsApp()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow flex items-center gap-1">
+            <span>WhatsApp</span>
+          </button>
+          <button id="pdf-popup-download-btn" type="button" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-xs shadow">
+            Descargar PDF
+          </button>
+          <button type="button" onclick="closePdfPopupWindow()" aria-label="Cerrar ventana PDF" class="p-2 rounded-xl bg-granate-800 hover:bg-granate-700 text-oro-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="pdf-popup-canvas-area" class="flex-1 overflow-y-auto p-3 sm:p-4 bg-stone-200/80 dark:bg-granate-900/70 flex flex-col items-center justify-center">
+        <p class="text-xs text-stone-600 dark:text-stone-300 my-auto mx-auto">Cargando visor de PDF...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // CONSTANTES DE ALMACENAMIENTO LOCAL Y SUPABASE
+    // =========================================================================
+    const STORAGE_KEY = 'santa_ana_98_asociacion_v2_cache';
+    const IDB_NAME = 'SantaAna98AsociacionV2DB';
+    const IDB_STORE = 'estado_asociacion';
+
+    const SYNC_CONFIG_STORAGE_KEY = 'santa_ana_98_asociacion_supabase_v2';
+
+    const DEFAULT_SUPABASE_CONFIG = {
+      url: 'https://mugmwwyiftfbkrjlxpam.supabase.co',
+      anonKey: 'sb_publishable_Mxr7Qwi72F6Lbdom0bHxxA_Ej5eLX_R',
+      table: 'asociacion_santa_ana_98_estado',
+      rowId: 'asociacion_santa_ana_98_cuentas_v2'
+    };
+
+    function loadSupabaseConfig() {
+      try {
+        const raw = localStorage.getItem(SYNC_CONFIG_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object') {
+            return {
+              url: (parsed.url || DEFAULT_SUPABASE_CONFIG.url).trim(),
+              anonKey: (parsed.anonKey || DEFAULT_SUPABASE_CONFIG.anonKey).trim(),
+              table: (parsed.table || DEFAULT_SUPABASE_CONFIG.table).trim(),
+              rowId: (parsed.rowId || DEFAULT_SUPABASE_CONFIG.rowId).trim(),
+              autoSync: parsed.autoSync !== false
+            };
+          }
+        }
+      } catch (_) {}
+      return { ...DEFAULT_SUPABASE_CONFIG, autoSync: true };
+    }
+
+    let SUPABASE_CONFIG = loadSupabaseConfig();
+    let activePdfIframeUrl = null;
+    let lastGeneratedPdfMeta = {
+      filename: 'Santa-Ana-98-Documento.pdf',
+      summaryText: 'Documento PDF generado · Asociación Santa Ana-98',
+      downloadFn: null
+    };
+
+    function revokeActivePdfIframeUrl() {
+      if (activePdfIframeUrl) {
+        try { URL.revokeObjectURL(activePdfIframeUrl); } catch (_) {}
+        activePdfIframeUrl = null;
+      }
+    }
+
+    function openWhatsAppWithText(text) {
+      const encoded = encodeURIComponent(String(text || ''));
+      const appUrl = `whatsapp://send?text=${encoded}`;
+      const webUrl = `https://wa.me/?text=${encoded}`;
+      const isAndroid = /Android/i.test(navigator.userAgent || '');
+
+      if (isAndroid) {
+        // En WebIntoApp / Android WebView, whatsapp:// abre directamente la app instalada
+        // sin pasar por la página web ni disparar descargas en el WebView
+        const link = document.createElement('a');
+        link.href = appUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => {
+          if (!document.hidden) {
+            window.location.href = webUrl;
+          }
+        }, 1200);
+        return;
+      }
+
+      window.location.href = appUrl;
+      setTimeout(() => {
+        if (!document.hidden) {
+          window.open(webUrl, '_blank', 'noopener,noreferrer');
+        }
+      }, 900);
+    }
+
+    function shareLastGeneratedPdfOnWhatsApp() {
+      if (!lastGeneratedPdfBlob) {
+        showToast('Primero genera un PDF', 'error');
+        return;
+      }
+      if (typeof lastGeneratedPdfMeta.downloadFn === 'function') {
+        lastGeneratedPdfMeta.downloadFn();
+      } else {
+        downloadGeneratedPdf();
+      }
+      const msg = `${lastGeneratedPdfMeta.summaryText}\nArchivo PDF: ${lastGeneratedPdfMeta.filename}`;
+      openWhatsAppWithText(msg);
+      showToast('PDF descargado · Abriendo WhatsApp', 'success');
+    }
+
+    async function renderPdfPagesIntoContainer(blob, container) {
+      // Intenta usar PDF.js si está disponible para renderizar páginas en <canvas> sin que
+      // Android WebView dispare "Save as" ni bloquee blob: en <iframe>.
+      // Si no está cargado PDF.js, cae de forma segura a <embed>/<object>/iframe.
+      const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+      if (pdfjsLib && typeof pdfjsLib.getDocument === 'function') {
+        try {
+          if (pdfjsLib.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          }
+          const arrayBuffer = await blob.arrayBuffer();
+          const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+          const pdfDoc = await loadingTask.promise;
+
+          const pagesWrapper = document.createElement('div');
+          pagesWrapper.className = 'w-full flex flex-col items-center gap-3 py-1';
+
+          const containerWidth = Math.max(280, (container.clientWidth || 640) - 24);
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+            const page = await pdfDoc.getPage(pageNum);
+            const unscaledViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(2.2, Math.max(0.8, containerWidth / unscaledViewport.width));
+            const viewport = page.getViewport({ scale });
+
+            const pageCard = document.createElement('div');
+            pageCard.className = 'w-full flex flex-col items-center bg-white rounded-xl shadow-md border border-stone-300 overflow-hidden p-1.5';
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = Math.floor(viewport.width * dpr);
+            canvas.height = Math.floor(viewport.height * dpr);
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+            canvas.style.display = 'block';
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            pageCard.appendChild(canvas);
+            pagesWrapper.appendChild(pageCard);
+          }
+
+          container.innerHTML = '';
+          container.appendChild(pagesWrapper);
+          return true;
+        } catch (_) {}
+      }
+      return false;
+    }
+
+    async function openPdfInPopupWindow({ title, subtitle, blob, onDownload, filename, summaryText }) {
+      lastGeneratedPdfBlob = blob;
+      lastGeneratedPdfMeta = {
+        filename: filename || 'Santa-Ana-98-Documento.pdf',
+        summaryText: summaryText || title || 'Informe Asociación Santa Ana-98',
+        downloadFn: typeof onDownload === 'function' ? onDownload : downloadGeneratedPdf
+      };
+      revokeActivePdfIframeUrl();
+
+      const popup = document.getElementById('pdf-popup-window');
+      const titleEl = document.getElementById('pdf-popup-title');
+      const subEl = document.getElementById('pdf-popup-subtitle');
+      const area = document.getElementById('pdf-popup-canvas-area');
+      const dlBtn = document.getElementById('pdf-popup-download-btn');
+
+      if (!popup || !area) return;
+
+      if (titleEl) titleEl.textContent = title || 'Visor PDF · Santa Ana-98';
+      if (subEl) subEl.textContent = subtitle || 'Visor de documento PDF';
+      if (dlBtn) {
+        dlBtn.onclick = typeof onDownload === 'function' ? onDownload : downloadGeneratedPdf;
+      }
+
+      popup.classList.remove('hidden');
+      popup.classList.add('flex');
+
+      area.innerHTML = `<p class="text-xs text-stone-600 dark:text-stone-300 my-auto mx-auto">Renderizando documento PDF...</p>`;
+
+      const renderedWithPdfJs = await renderPdfPagesIntoContainer(blob, area);
+      if (renderedWithPdfJs) return;
+
+      const objectUrl = URL.createObjectURL(blob);
+      activePdfIframeUrl = objectUrl;
+
+      area.innerHTML = `
+        <iframe
+          src="${objectUrl}#view=FitH"
+          title="${escapeHtml(title || 'Visor PDF')}"
+          class="w-full h-full min-h-[65vh] rounded-2xl bg-white border border-stone-300 dark:border-granate-800 shadow-inner">
+        </iframe>
+      `;
+    }
+
+    function closePdfPopupWindow() {
+      const popup = document.getElementById('pdf-popup-window');
+      const area = document.getElementById('pdf-popup-canvas-area');
+      if (popup) {
+        popup.classList.add('hidden');
+        popup.classList.remove('flex');
+      }
+      if (area) {
+        area.innerHTML = `<p class="text-xs text-stone-600 dark:text-stone-300 my-auto mx-auto">Cargando visor de PDF...</p>`;
+      }
+      revokeActivePdfIframeUrl();
+    }
+
+    // =========================================================================
+    // ESTADO INICIAL PARTIENDO DE CERO (SIN DATOS PRECARGADOS)
+    // =========================================================================
+    function createInitialState() {
+      return {
+        meta: {
+          asociacion: 'Asociación Santa Ana-98',
+          updatedAt: new Date().toISOString()
+        },
+        ui: {
+          activeTab: 'cuentas',
+          movGestionExpanded: true,
+          movFiltersExpanded: true,
+          reportFiltersExpanded: true,
+          movFilterTipo: 'TODOS',
+          movFilterDesde: '',
+          movFilterHasta: '',
+          movFilterCategoria: '',
+          movFilterCuenta: '',
+          movFilterTexto: '',
+          reportDesde: '',
+          reportHasta: '',
+          prevPresupuestoActivo: 'TODAS',
+          darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        },
+        cuentas: [],
+        movimientos: [],
+        presupuestos: []
+      };
+    }
+
+    let state = createInitialState();
+    let lastGeneratedPdfBlob = null;
+
+    // =========================================================================
+    // UTILIDADES DE FORMATO Y NOTIFICACIÓN
+    // =========================================================================
+    function formatEur(num) {
+      const n = Number(num) || 0;
+      return n.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }) + ' €';
+    }
+
+    function formatDateEs(dateStr) {
+      const s = String(dateStr || '').trim();
+      if (!s) return '';
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+      return s;
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(msg, variant = 'info') {
+      const banner = document.getElementById('toast-banner');
+      const inner = document.getElementById('toast-inner');
+      const textEl = document.getElementById('toast-message');
+      textEl.textContent = msg;
+
+      inner.className = 'px-4 py-3 rounded-2xl shadow-xl border text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 ' + (
+        variant === 'error'
+          ? 'bg-red-950 text-red-100 border-red-700'
+          : variant === 'success'
+          ? 'bg-emerald-950 text-emerald-100 border-emerald-600'
+          : 'bg-granate-950 text-oro-200 border-oro-500/40'
+      );
+
+      banner.classList.remove('hidden');
+      clearTimeout(window.__toastTimeout);
+      window.__toastTimeout = setTimeout(() => banner.classList.add('hidden'), 3200);
+    }
+
+    // =========================================================================
+    // CACHÉ LOCAL: LOCALSTORAGE + INDEXEDDB
+    // =========================================================================
+    function openIndexedDB() {
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) return reject(new Error('IndexedDB no disponible'));
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function writeIDB(payload) {
+      try {
+        const db = await openIndexedDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(payload, STORAGE_KEY);
+      } catch (_) {}
+    }
+
+    async function readIDB() {
+      try {
+        const db = await openIndexedDB();
+        return await new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const req = tx.objectStore(IDB_STORE).get(STORAGE_KEY);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function persistLocalState(triggerCloudSync = true) {
+      state.meta.updatedAt = new Date().toISOString();
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (_) {
+        showToast('Aviso: espacio de LocalStorage limitado', 'error');
+      }
+      writeIDB(state);
+      if (triggerCloudSync) {
+        scheduleAutoPushToSupabase();
+      }
+    }
+
+    async function hydrateLocalState() {
+      let parsed = null;
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) parsed = JSON.parse(raw);
+      } catch (_) {}
+      if (!parsed) {
+        parsed = await readIDB();
+      }
+      if (parsed && typeof parsed === 'object') {
+        const init = createInitialState();
+        state = {
+          ...init,
+          ...parsed,
+          meta: { ...init.meta, ...(parsed.meta || {}) },
+          ui: {
+            ...init.ui,
+            ...(parsed.ui || {}),
+            movGestionExpanded: parsed.ui?.movGestionExpanded !== false,
+            movFiltersExpanded: parsed.ui?.movFiltersExpanded !== false,
+            reportFiltersExpanded: parsed.ui?.reportFiltersExpanded !== false,
+            prevPresupuestoActivo: (parsed.ui && parsed.ui.prevPresupuestoActivo) || 'TODAS',
+            customPresupuestos: Array.isArray(parsed.ui?.customPresupuestos) ? parsed.ui.customPresupuestos : [],
+            deletedPresupuestos: Array.isArray(parsed.ui?.deletedPresupuestos) ? parsed.ui.deletedPresupuestos : []
+          },
+          cuentas: Array.isArray(parsed.cuentas) ? parsed.cuentas : [],
+          movimientos: Array.isArray(parsed.movimientos) ? parsed.movimientos : [],
+          presupuestos: Array.isArray(parsed.presupuestos) ? parsed.presupuestos : []
+        };
+      }
+
+      // Garantiza siempre los nuevos valores por defecto de Supabase si no se ha guardado una config personalizada
+      try {
+        const savedCfg = localStorage.getItem(SYNC_CONFIG_STORAGE_KEY);
+        if (!savedCfg) {
+          SUPABASE_CONFIG = { ...DEFAULT_SUPABASE_CONFIG, autoSync: true };
+        }
+      } catch (_) {}
+      applyTheme();
+    }
+
+    // =========================================================================
+    // SINCRONIZACIÓN CON SUPABASE (AUTOMÁTICA Y MANUAL)
+    // =========================================================================
+    let autoSyncTimer = null;
+
+    function isAutoSyncEnabled() {
+      return SUPABASE_CONFIG.autoSync !== false;
+    }
+
+    function scheduleAutoPushToSupabase() {
+      if (!isAutoSyncEnabled() || !navigator.onLine) return;
+      clearTimeout(autoSyncTimer);
+      const statusEl = document.getElementById('sync-status-text');
+      if (statusEl) statusEl.textContent = 'Sincronizando cambios en la nube...';
+      autoSyncTimer = setTimeout(() => {
+        pushToSupabase(true);
+      }, 900);
+    }
+
+    function getSupabaseHeaders() {
+      return {
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': 'Bearer ' + SUPABASE_CONFIG.anonKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      };
+    }
+
+    function formatSupabaseError(status, detailText = '') {
+      let parsedMsg = detailText;
+      try {
+        const j = JSON.parse(detailText);
+        parsedMsg = j.message || j.hint || j.details || detailText;
+      } catch (_) {}
+      if (status === 404 || /relation .* does not exist/i.test(parsedMsg)) {
+        return `Falta crear la tabla "${SUPABASE_CONFIG.table}" en Supabase (ver SQL en el icono de engranaje)`;
+      }
+      if (status === 401 || status === 403 || /row-level security/i.test(parsedMsg)) {
+        return `Permiso denegado / RLS en "${SUPABASE_CONFIG.table}" (revisa políticas SQL en el engranaje)`;
+      }
+      return `HTTP ${status}${parsedMsg ? ': ' + parsedMsg : ''}`;
+    }
+
+    async function pushToSupabase(silent = false) {
+      const statusEl = document.getElementById('sync-status-text');
+      const pushBtn = document.getElementById('btn-push-sync');
+
+      if (pushBtn) pushBtn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Publicando en nube...';
+
+      const baseUrl = SUPABASE_CONFIG.url.replace(/\/+$/, '');
+      const table = encodeURIComponent(SUPABASE_CONFIG.table);
+      const rowId = encodeURIComponent(SUPABASE_CONFIG.rowId);
+
+      const payload = {
+        estado: state,
+        actualizado_en: new Date().toISOString()
+      };
+
+      try {
+        const patchResp = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${rowId}`, {
+          method: 'PATCH',
+          headers: getSupabaseHeaders(),
+          body: JSON.stringify(payload)
+        });
+        if (!patchResp.ok) {
+          const errBody = await patchResp.text().catch(() => '');
+          throw new Error(formatSupabaseError(patchResp.status, errBody));
+        }
+
+        const updatedRows = await patchResp.json();
+        if (!Array.isArray(updatedRows) || updatedRows.length === 0) {
+          const postResp = await fetch(`${baseUrl}/rest/v1/${table}`, {
+            method: 'POST',
+            headers: getSupabaseHeaders(),
+            body: JSON.stringify({
+              id: SUPABASE_CONFIG.rowId,
+              ...payload
+            })
+          });
+          if (!postResp.ok) {
+            const errBody = await postResp.text().catch(() => '');
+            throw new Error(formatSupabaseError(postResp.status, errBody));
+          }
+        }
+
+        const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        if (statusEl) statusEl.textContent = `Sincronizado en nube ✓ ${hora} (${SUPABASE_CONFIG.rowId})`;
+        if (!silent) showToast('Todo sincronizado en Supabase (cuentas, movimientos y presupuestos)', 'success');
+      } catch (err) {
+        if (statusEl) statusEl.textContent = `Error nube: ${err.message}`;
+        if (!silent) showToast(`Error al sincronizar: ${err.message}`, 'error');
+      } finally {
+        if (pushBtn) pushBtn.disabled = false;
+      }
+    }
+
+    async function pullFromSupabase(silent = false) {
+      const statusEl = document.getElementById('sync-status-text');
+      const pullBtn = document.getElementById('btn-pull-sync');
+
+      if (pullBtn) pullBtn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Sincronizando desde nube...';
+
+      const baseUrl = SUPABASE_CONFIG.url.replace(/\/+$/, '');
+      const table = encodeURIComponent(SUPABASE_CONFIG.table);
+      const rowId = encodeURIComponent(SUPABASE_CONFIG.rowId);
+
+      try {
+        const resp = await fetch(`${baseUrl}/rest/v1/${table}?id=eq.${rowId}&select=id,estado,actualizado_en`, {
+          method: 'GET',
+          headers: getSupabaseHeaders()
+        });
+        if (!resp.ok) {
+          const errBody = await resp.text().catch(() => '');
+          throw new Error(formatSupabaseError(resp.status, errBody));
+        }
+
+        const rows = await resp.json();
+        if (Array.isArray(rows) && rows.length > 0 && rows[0].estado) {
+          const remote = rows[0].estado;
+          const keepTab = state.ui.activeTab;
+          const keepExpanded = state.ui.movGestionExpanded;
+          const keepMovFiltersExp = state.ui.movFiltersExpanded;
+          const keepRepFiltersExp = state.ui.reportFiltersExpanded;
+          const keepFilter = state.ui.movFilterTipo;
+          const keepDesde = state.ui.reportDesde;
+          const keepHasta = state.ui.reportHasta;
+          const keepPrevSel = state.ui.prevPresupuestoActivo;
+
+          const init = createInitialState();
+          state = {
+            ...init,
+            ...remote,
+            meta: { ...init.meta, ...(remote.meta || {}) },
+            ui: {
+              ...init.ui,
+              ...(remote.ui || {}),
+              activeTab: keepTab,
+              movGestionExpanded: keepExpanded !== undefined ? keepExpanded : (remote.ui?.movGestionExpanded !== false),
+              movFiltersExpanded: keepMovFiltersExp !== undefined ? keepMovFiltersExp : (remote.ui?.movFiltersExpanded !== false),
+              reportFiltersExpanded: keepRepFiltersExp !== undefined ? keepRepFiltersExp : (remote.ui?.reportFiltersExpanded !== false),
+              movFilterTipo: keepFilter,
+              movFilterDesde: state.ui.movFilterDesde || '',
+              movFilterHasta: state.ui.movFilterHasta || '',
+              movFilterCategoria: state.ui.movFilterCategoria || '',
+              movFilterCuenta: state.ui.movFilterCuenta || '',
+              movFilterTexto: state.ui.movFilterTexto || '',
+              reportDesde: keepDesde,
+              reportHasta: keepHasta,
+              prevPresupuestoActivo: keepPrevSel || remote.ui?.prevPresupuestoActivo || 'TODAS'
+            },
+            cuentas: Array.isArray(remote.cuentas) ? remote.cuentas : [],
+            movimientos: Array.isArray(remote.movimientos) ? remote.movimientos : [],
+            presupuestos: Array.isArray(remote.presupuestos) ? remote.presupuestos : []
+          };
+
+          persistLocalState(false);
+          applyTheme();
+          render();
+          const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+          if (statusEl) statusEl.textContent = `Sincronizado ↓ ${hora} (${SUPABASE_CONFIG.rowId})`;
+          if (!silent) showToast('Datos descargados y sincronizados desde Supabase', 'success');
+        } else {
+          const hasLocalData = state.cuentas.length > 0 || state.movimientos.length > 0 || state.presupuestos.length > 0;
+          if (hasLocalData && isAutoSyncEnabled()) {
+            await pushToSupabase(true);
+          } else {
+            if (statusEl) statusEl.textContent = `Nube conectada · Lista para sincronizar`;
+            if (!silent) showToast('Conexión correcta · Aún no había datos remotos');
+          }
+        }
+      } catch (err) {
+        if (statusEl) statusEl.textContent = `Sin conexión nube (${err.message})`;
+        if (!silent) showToast(`Error al sincronizar: ${err.message}`, 'error');
+      } finally {
+        if (pullBtn) pullBtn.disabled = false;
+      }
+    }
+
+    function getSupabaseSetupSql(tableName = SUPABASE_CONFIG.table) {
+      const safeTable = String(tableName || 'asociacion_santa_ana_98_estado').replace(/[^a-zA-Z0-9_]/g, '') || 'asociacion_santa_ana_98_estado';
+      return `create table if not exists public.${safeTable} (
+  id text primary key,
+  estado jsonb not null default '{}'::jsonb,
+  actualizado_en timestamptz not null default now()
+);
+
+alter table public.${safeTable} enable row level security;
+
+drop policy if exists "Acceso asociacion santa ana 98 ${safeTable}" on public.${safeTable};
+create policy "Acceso asociacion santa ana 98 ${safeTable}"
+  on public.${safeTable}
+  for all
+  to anon, authenticated
+  using (true)
+  with check (true);`;
+    }
+
+    function copySupabaseSql() {
+      const tableVal = document.getElementById('sync-cfg-table')?.value || SUPABASE_CONFIG.table;
+      const sql = getSupabaseSetupSql(tableVal);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sql)
+          .then(() => showToast('SQL copiado al portapapeles', 'success'))
+          .catch(() => showToast('Selecciona y copia el bloque SQL manualmente'));
+      } else {
+        showToast('Selecciona y copia el bloque SQL manualmente');
+      }
+    }
+
+    function openSyncConfigModal() {
+      SUPABASE_CONFIG = loadSupabaseConfig();
+      const autoSyncChecked = isAutoSyncEnabled() ? 'checked' : '';
+      const sqlSnippet = getSupabaseSetupSql(SUPABASE_CONFIG.table);
+
+      openModal(
+        'Sincronización en la nube (Supabase)',
+        `
+        <form onsubmit="saveSyncConfig(event)" class="space-y-3 text-xs">
+          <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between gap-3">
+            <div>
+              <p class="font-extrabold text-emerald-900 dark:text-emerald-200">Sincronización automática en tiempo real</p>
+              <p class="text-[11px] text-emerald-800/80 dark:text-emerald-300/80">Sube automáticamente cuentas, movimientos y presupuestos cada vez que hagas un cambio.</p>
+            </div>
+            <input id="sync-cfg-autosync" type="checkbox" ${autoSyncChecked} class="w-5 h-5 accent-oro-500 rounded cursor-pointer shrink-0" />
+          </div>
+
+          <div>
+            <label for="sync-cfg-url" class="block font-bold mb-1">URL del proyecto Supabase *</label>
+            <input id="sync-cfg-url" type="url" required value="${escapeHtml(SUPABASE_CONFIG.url)}" placeholder="https://tu-proyecto.supabase.co" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 font-mono" />
+          </div>
+
+          <div>
+            <label for="sync-cfg-key" class="block font-bold mb-1">Anon Public Key *</label>
+            <textarea id="sync-cfg-key" rows="2" required placeholder="eyJhbGciOi..." class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 font-mono">${escapeHtml(SUPABASE_CONFIG.anonKey)}</textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="sync-cfg-table" class="block font-bold mb-1">Tabla *</label>
+              <input id="sync-cfg-table" type="text" required value="${escapeHtml(SUPABASE_CONFIG.table)}" placeholder="asociacion_santa_ana_98_estado" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 font-mono" />
+            </div>
+            <div>
+              <label for="sync-cfg-rowid" class="block font-bold mb-1">ID de registro (Fila) *</label>
+              <input id="sync-cfg-rowid" type="text" required value="${escapeHtml(SUPABASE_CONFIG.rowId)}" placeholder="asociacion_santa_ana_98_cuentas_v2" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 font-mono" />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <button type="button" onclick="fillDefaultSyncConfigInputs()" class="flex-1 py-2.5 px-3 rounded-2xl bg-stone-200 dark:bg-granate-800 hover:bg-stone-300 dark:hover:bg-granate-700 font-bold text-xs transition">
+              Cargar valores por defecto
+            </button>
+            <button type="submit" class="flex-1 py-2.5 px-4 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-xs shadow transition">
+              Guardar y sincronizar ahora
+            </button>
+          </div>
+
+          <div class="pt-2 border-t border-stone-200 dark:border-granate-800 space-y-2">
+            <p class="font-bold text-granate-900 dark:text-oro-200">Copia de seguridad local (JSON)</p>
+            <p class="text-[11px] text-stone-500 dark:text-stone-400">
+              Exporta o importa todos los datos de la aplicación (cuentas, movimientos y presupuestos) en formato JSON.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button type="button" onclick="exportBackupJson()" class="flex-1 py-2.5 px-3 rounded-2xl bg-granate-900 hover:bg-granate-800 text-oro-200 border border-oro-500/35 font-bold text-xs transition">
+                Exportar copia JSON
+              </button>
+              <label class="flex-1 py-2.5 px-3 rounded-2xl bg-stone-200 dark:bg-granate-800 hover:bg-stone-300 dark:hover:bg-granate-700 font-bold text-xs text-center cursor-pointer transition">
+                Importar copia JSON
+                <input type="file" accept=".json,application/json" onchange="importBackupJson(event)" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <details class="pt-2 border-t border-stone-200 dark:border-granate-800">
+            <summary class="cursor-pointer font-bold text-granate-800 dark:text-oro-300 select-none">
+              SQL para crear la tabla en Supabase (si es la primera vez)
+            </summary>
+            <div class="mt-2 space-y-2">
+              <p class="text-[11px] text-stone-500 dark:text-stone-400">
+                Pega este código en el <strong>SQL Editor</strong> de tu proyecto Supabase y pulsa <em>Run</em>:
+              </p>
+              <pre class="p-2.5 rounded-xl bg-stone-900 text-oro-200 text-[10px] overflow-x-auto font-mono leading-relaxed">${escapeHtml(sqlSnippet)}</pre>
+              <button type="button" onclick="copySupabaseSql()" class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-granate-800 font-bold text-[11px]">
+                Copiar SQL
+              </button>
+            </div>
+          </details>
+        </form>
+        `
+      );
+    }
+
+    function exportBackupJson() {
+      const payload = {
+        app: 'Asociación Santa Ana-98 · Cuentas y Presupuestos',
+        exportedAt: new Date().toISOString(),
+        state
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Santa-Ana-98-Copia-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast('Copia JSON exportada correctamente', 'success');
+    }
+
+    function importBackupJson(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || '{}'));
+          const incoming = parsed && parsed.state && typeof parsed.state === 'object' ? parsed.state : parsed;
+          if (!incoming || typeof incoming !== 'object' || (!Array.isArray(incoming.cuentas) && !Array.isArray(incoming.movimientos) && !Array.isArray(incoming.presupuestos))) {
+            throw new Error('Estructura JSON no válida');
+          }
+          const init = createInitialState();
+          state = {
+            ...init,
+            ...incoming,
+            meta: { ...init.meta, ...(incoming.meta || {}) },
+            ui: { ...init.ui, ...(incoming.ui || {}) },
+            cuentas: Array.isArray(incoming.cuentas) ? incoming.cuentas : [],
+            movimientos: Array.isArray(incoming.movimientos) ? incoming.movimientos : [],
+            presupuestos: Array.isArray(incoming.presupuestos) ? incoming.presupuestos : []
+          };
+          persistLocalState();
+          applyTheme();
+          closeModal();
+          render();
+          showToast('Copia JSON importada correctamente', 'success');
+        } catch (err) {
+          showToast(`Error al importar JSON: ${err.message}`, 'error');
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function fillDefaultSyncConfigInputs() {
+      const urlEl = document.getElementById('sync-cfg-url');
+      const keyEl = document.getElementById('sync-cfg-key');
+      const tableEl = document.getElementById('sync-cfg-table');
+      const rowIdEl = document.getElementById('sync-cfg-rowid');
+      const autoEl = document.getElementById('sync-cfg-autosync');
+      if (urlEl) urlEl.value = DEFAULT_SUPABASE_CONFIG.url;
+      if (keyEl) keyEl.value = DEFAULT_SUPABASE_CONFIG.anonKey;
+      if (tableEl) tableEl.value = DEFAULT_SUPABASE_CONFIG.table;
+      if (rowIdEl) rowIdEl.value = DEFAULT_SUPABASE_CONFIG.rowId;
+      if (autoEl) autoEl.checked = true;
+      showToast('Valores por defecto cargados en el formulario');
+    }
+
+    async function saveSyncConfig(event) {
+      event.preventDefault();
+      const url = (document.getElementById('sync-cfg-url')?.value || '').trim();
+      const anonKey = (document.getElementById('sync-cfg-key')?.value || '').trim();
+      const table = (document.getElementById('sync-cfg-table')?.value || '').trim();
+      const rowId = (document.getElementById('sync-cfg-rowid')?.value || '').trim();
+      const autoSync = Boolean(document.getElementById('sync-cfg-autosync')?.checked);
+
+      if (!url || !anonKey || !table || !rowId) {
+        showToast('Completa todos los campos de Supabase', 'error');
+        return;
+      }
+
+      SUPABASE_CONFIG = { url, anonKey, table, rowId, autoSync };
+      try {
+        localStorage.setItem(SYNC_CONFIG_STORAGE_KEY, JSON.stringify(SUPABASE_CONFIG));
+      } catch (_) {}
+
+      closeModal();
+      await pushToSupabase(false);
+    }
+
+    // =========================================================================
+    // TEMA
+    // =========================================================================
+    function applyTheme() {
+      document.documentElement.classList.toggle('dark', Boolean(state.ui.darkMode));
+    }
+
+    function toggleTheme() {
+      state.ui.darkMode = !state.ui.darkMode;
+      applyTheme();
+      persistLocalState(false);
+    }
+
+    // =========================================================================
+    // CÁLCULOS CONTABLES Y DE CUENTAS
+    // =========================================================================
+    function getCuentaSaldo(cuenta) {
+      const base = Number(cuenta.saldoInicial) || 0;
+      const fechaCorte = (cuenta.fechaSaldo || '').trim();
+      let delta = 0;
+      for (const mov of state.movimientos) {
+        if (mov.cuentaOrigen === cuenta.nombre) {
+          if (fechaCorte && mov.fecha && mov.fecha <= fechaCorte) continue;
+          const imp = Number(mov.importe) || 0;
+          delta += mov.tipo === 'INGRESO' ? imp : -imp;
+        }
+      }
+      return base + delta;
+    }
+
+    function getGlobalTotals() {
+      const totalIngresos = state.movimientos
+        .filter(m => m.tipo === 'INGRESO')
+        .reduce((acc, m) => acc + (Number(m.importe) || 0), 0);
+      const totalGastos = state.movimientos
+        .filter(m => m.tipo === 'GASTO')
+        .reduce((acc, m) => acc + (Number(m.importe) || 0), 0);
+      const saldoCuentas = state.cuentas
+        .reduce((acc, c) => acc + getCuentaSaldo(c), 0);
+      const movsSinCuenta = state.movimientos
+        .filter(m => !state.cuentas.some(c => c.nombre === m.cuentaOrigen))
+        .reduce((acc, m) => acc + (m.tipo === 'INGRESO' ? (Number(m.importe) || 0) : -(Number(m.importe) || 0)), 0);
+      const saldoTotal = saldoCuentas + movsSinCuenta;
+
+      return { totalIngresos, totalGastos, saldoTotal };
+    }
+
+    function getFilteredReportMovimientos() {
+      const desde = (state.ui.reportDesde || '').trim();
+      const hasta = (state.ui.reportHasta || '').trim();
+      return state.movimientos.filter(m => {
+        if (!m.fecha) return true;
+        if (desde && m.fecha < desde) return false;
+        if (hasta && m.fecha > hasta) return false;
+        return true;
+      });
+    }
+
+    // =========================================================================
+    // NAVEGACIÓN DE LAS 4 PESTAÑAS
+    // =========================================================================
+    function switchTab(tabId) {
+      const valid = ['cuentas', 'movimientos', 'informes', 'previsiones'];
+      if (!valid.includes(tabId)) return;
+      state.ui.activeTab = tabId;
+      persistLocalState(false);
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderNavHighlight() {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        const isActive = btn.getAttribute('data-tab-btn') === state.ui.activeTab;
+        btn.className = 'nav-tab-btn py-2 px-1 rounded-2xl transition flex flex-col items-center justify-center gap-0.5 text-xs ' + (
+          isActive
+            ? 'bg-granate-900 dark:bg-oro-500 text-oro-300 dark:text-granate-950 font-extrabold shadow'
+            : 'text-stone-600 dark:text-stone-300 hover:bg-stone-200/70 dark:hover:bg-granate-900 font-medium'
+        );
+      });
+    }
+
+    // =========================================================================
+    // PESTAÑA 1: CUENTAS
+    // =========================================================================
+    function renderCuentasTab() {
+      const totals = getGlobalTotals();
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Total Ingresos</span>
+              <span class="text-lg sm:text-xl font-extrabold text-emerald-700 dark:text-emerald-400">${formatEur(totals.totalIngresos)}</span>
+            </div>
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Total Gastos</span>
+              <span class="text-lg sm:text-xl font-extrabold text-red-700 dark:text-red-400">${formatEur(totals.totalGastos)}</span>
+            </div>
+            <div class="bg-gradient-to-br from-granate-900 to-granate-800 text-white rounded-3xl p-4 border border-oro-500/40 shadow-sm">
+              <span class="text-xs font-semibold text-oro-300 block">Saldo Total</span>
+              <span class="text-lg sm:text-xl font-extrabold text-oro-200">${formatEur(totals.saldoTotal)}</span>
+            </div>
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h2 class="font-bold text-sm sm:text-base text-granate-900 dark:text-oro-200">Cuentas de la Asociación</h2>
+                <p class="text-xs text-stone-500 dark:text-stone-400">Partiendo de 0 €</p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="openEstadoCuentasModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-granate-900 to-granate-800 hover:from-granate-800 hover:to-granate-700 text-oro-200 border border-oro-500/40 font-extrabold text-xs shadow flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Estado de cuentas / Imprimir
+                </button>
+                <button type="button" onclick="openCuentaModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 text-granate-950 font-extrabold text-xs shadow">
+                  + Nueva cuenta
+                </button>
+              </div>
+            </div>
+
+            ${state.cuentas.length === 0 ? `
+              <div class="py-8 px-4 text-center rounded-2xl border border-dashed border-stone-300 dark:border-granate-700 text-xs text-stone-500 dark:text-stone-400">
+                No hay cuentas creadas todavía. Pulsa <strong>+ Nueva cuenta</strong> para empezar desde 0 €.
+              </div>
+            ` : `
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                ${state.cuentas.map(c => {
+                  const saldoActual = getCuentaSaldo(c);
+                  return `
+                    <div
+                      class="p-4 rounded-2xl bg-stone-50 dark:bg-granate-950/70 border border-stone-200 dark:border-granate-800 hover:border-oro-500/50 transition flex flex-col justify-between gap-2">
+                      <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0 flex-1">
+                          <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-granate-900/10 dark:bg-oro-500/15 text-granate-800 dark:text-oro-300">
+                            ${escapeHtml(c.tipo || 'Cuenta')}
+                          </span>
+                          <h3 class="font-bold text-sm mt-1 break-words">${escapeHtml(c.nombre)}</h3>
+                          ${c.notas ? `<p class="text-xs text-stone-500 dark:text-stone-400 break-words">${escapeHtml(c.notas)}</p>` : ''}
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onclick="openCuentaModal('${c.id}')"
+                            class="px-2.5 py-1 rounded-xl bg-stone-200 dark:bg-granate-800 text-xs font-semibold">
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onclick="deleteItemById('cuenta', '${c.id}')"
+                            class="px-2.5 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 text-xs font-semibold">
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                      <div class="pt-2 border-t border-stone-200/80 dark:border-granate-800 flex items-baseline justify-between gap-2 flex-wrap">
+                        <span class="text-[11px] text-stone-500">
+                          Saldo actual${c.fechaSaldo ? ` (desde ${escapeHtml(formatDateEs(c.fechaSaldo))})` : ''}
+                        </span>
+                        <span class="font-extrabold text-base ${saldoActual < 0 ? 'text-red-600 dark:text-red-400' : 'text-granate-900 dark:text-oro-300'}">
+                          ${formatEur(saldoActual)}
+                        </span>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // PESTAÑA 2: MOVIMIENTOS
+    // =========================================================================
+    function toggleMovGestionAccordion() {
+      state.ui.movGestionExpanded = state.ui.movGestionExpanded === false ? true : false;
+      persistLocalState(false);
+      render();
+    }
+
+    function toggleMovFiltersAccordion() {
+      state.ui.movFiltersExpanded = state.ui.movFiltersExpanded === false ? true : false;
+      persistLocalState(false);
+      render();
+    }
+
+    function toggleReportFiltersAccordion() {
+      state.ui.reportFiltersExpanded = state.ui.reportFiltersExpanded === false ? true : false;
+      persistLocalState(false);
+      render();
+    }
+
+    function getFilteredMovimientosList() {
+      const filterTipo = state.ui.movFilterTipo || 'TODOS';
+      const desde = (state.ui.movFilterDesde || '').trim();
+      const hasta = (state.ui.movFilterHasta || '').trim();
+      const cat = (state.ui.movFilterCategoria || '').trim().toLowerCase();
+      const cta = (state.ui.movFilterCuenta || '').trim().toLowerCase();
+      const texto = (state.ui.movFilterTexto || '').trim().toLowerCase();
+
+      return state.movimientos.filter(m => {
+        if (filterTipo === 'INGRESO' && m.tipo !== 'INGRESO') return false;
+        if (filterTipo === 'GASTO' && m.tipo !== 'GASTO') return false;
+        if (desde && m.fecha && m.fecha < desde) return false;
+        if (hasta && m.fecha && m.fecha > hasta) return false;
+        if (cat && String(m.categoria || '').toLowerCase() !== cat) return false;
+        if (cta && String(m.cuentaOrigen || '').toLowerCase() !== cta) return false;
+        if (texto) {
+          const hay = [
+            m.concepto,
+            m.referencia,
+            m.observaciones,
+            m.categoria,
+            m.cuentaOrigen,
+            m.fecha, formatDateEs(m.fecha),
+            String(m.importe || '')
+          ].join(' ').toLowerCase();
+          if (!hay.includes(texto)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderMovimientosTab() {
+      const isExpanded = state.ui.movGestionExpanded !== false;
+      const filterTipo = state.ui.movFilterTipo || 'TODOS';
+      const list = getFilteredMovimientosList();
+
+      const filteredIng = list.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+      const filteredGas = list.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+
+      const categoriasUnicas = Array.from(new Set([
+        ...CATEGORIAS_POR_TIPO.INGRESO,
+        ...CATEGORIAS_POR_TIPO.GASTO,
+        ...state.movimientos.map(m => (m.categoria || '').trim()).filter(Boolean),
+        ...state.presupuestos.map(p => (p.categoria || '').trim()).filter(Boolean)
+      ])).sort((a, b) => a.localeCompare(b, 'es'));
+
+      const cuentasUnicas = Array.from(new Set([
+        ...state.cuentas.map(c => (c.nombre || '').trim()).filter(Boolean),
+        ...state.movimientos.map(m => (m.cuentaOrigen || '').trim()).filter(Boolean)
+      ])).sort((a, b) => a.localeCompare(b, 'es'));
+
+      const hasActiveFilters = Boolean(
+        filterTipo !== 'TODOS' ||
+        state.ui.movFilterDesde ||
+        state.ui.movFilterHasta ||
+        state.ui.movFilterCategoria ||
+        state.ui.movFilterCuenta ||
+        state.ui.movFilterTexto
+      );
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onclick="toggleMovGestionAccordion()"
+                aria-expanded="${isExpanded ? 'true' : 'false'}"
+                class="flex-1 text-left flex items-center justify-between gap-2 rounded-2xl py-1 pr-1 hover:opacity-90 transition">
+                <div class="min-w-0">
+                  <h2 class="font-bold text-sm sm:text-base text-granate-900 dark:text-oro-200">Gestión de movimientos</h2>
+                  <p class="text-xs text-stone-500 dark:text-stone-400">
+                    ${isExpanded ? 'Alta en ventana emergente, edición directa e importación CSV' : 'Pulsar para expandir acciones y botones'}
+                  </p>
+                </div>
+                <span class="px-2.5 py-1.5 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-200 dark:border-granate-800 text-[11px] font-bold text-granate-900 dark:text-oro-200 flex items-center gap-1 shrink-0">
+                  <span>${isExpanded ? 'Contraer' : 'Expandir'}</span>
+                  <svg class="w-3.5 h-3.5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+
+            ${isExpanded ? `
+              <div class="pt-1 flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onclick="openMovimientoModal()"
+                  class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-granate-900 to-granate-800 hover:from-granate-800 hover:to-granate-700 text-oro-200 border border-oro-500/40 font-extrabold text-xs shadow transition">
+                  + Añadir nuevo movimiento
+                </button>
+                <button
+                  type="button"
+                  onclick="openImportCsvModal()"
+                  class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 text-granate-950 font-extrabold text-xs shadow flex items-center gap-1.5 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Importar CSV
+                </button>
+                ${state.movimientos.length > 0 ? `
+                  <button
+                    type="button"
+                    onclick="openDeleteAllMovimientosModal()"
+                    class="px-3.5 py-2 rounded-2xl bg-red-700 hover:bg-red-600 active:scale-95 text-white font-extrabold text-xs shadow flex items-center gap-1.5 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Borrar todos los movimientos
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <button
+                type="button"
+                onclick="toggleMovFiltersAccordion()"
+                aria-expanded="${state.ui.movFiltersExpanded !== false ? 'true' : 'false'}"
+                class="flex-1 text-left flex items-center justify-between gap-2 rounded-2xl py-1 pr-1 hover:opacity-90 transition min-w-0">
+                <div class="min-w-0">
+                  <h3 class="font-bold text-sm text-granate-900 dark:text-oro-200">Filtrar movimientos</h3>
+                  <p class="text-xs text-stone-500 dark:text-stone-400">
+                    ${state.ui.movFiltersExpanded !== false ? 'Filtra por fecha desde/hasta, tipo, categoría, cuenta o palabra clave' : (hasActiveFilters ? 'Filtros activos · Pulsar para expandir' : 'Pulsar para expandir filtros')}
+                  </p>
+                </div>
+                <span class="px-2.5 py-1.5 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-200 dark:border-granate-800 text-[11px] font-bold text-granate-900 dark:text-oro-200 flex items-center gap-1 shrink-0">
+                  <span>${state.ui.movFiltersExpanded !== false ? 'Contraer' : 'Expandir'}</span>
+                  <svg class="w-3.5 h-3.5 transition-transform duration-200 ${state.ui.movFiltersExpanded !== false ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </button>
+              ${hasActiveFilters ? `
+                <button type="button" onclick="resetMovFilters()" class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-granate-800 text-xs font-bold shrink-0">
+                  Limpiar filtros
+                </button>
+              ` : ''}
+            </div>
+
+            ${state.ui.movFiltersExpanded !== false ? `
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs">
+                <div>
+                  <label for="flt-mov-desde" class="block font-bold mb-1">Fecha desde</label>
+                  <input id="flt-mov-desde" type="date" value="${escapeHtml(state.ui.movFilterDesde || '')}" onchange="updateMovFilters()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+                </div>
+
+                <div>
+                  <label for="flt-mov-hasta" class="block font-bold mb-1">Fecha hasta</label>
+                  <input id="flt-mov-hasta" type="date" value="${escapeHtml(state.ui.movFilterHasta || '')}" onchange="updateMovFilters()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+                </div>
+
+                <div>
+                  <label for="flt-mov-cat" class="block font-bold mb-1">Categoría</label>
+                  <select id="flt-mov-cat" onchange="updateMovFilters()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500">
+                    <option value="">Todas las categorías</option>
+                    ${categoriasUnicas.map(c => `<option value="${escapeHtml(c)}" ${state.ui.movFilterCategoria === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label for="flt-mov-cta" class="block font-bold mb-1">Cuenta de origen</label>
+                  <select id="flt-mov-cta" onchange="updateMovFilters()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500">
+                    <option value="">Todas las cuentas</option>
+                    ${cuentasUnicas.map(c => `<option value="${escapeHtml(c)}" ${state.ui.movFilterCuenta === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label for="flt-mov-txt" class="block font-bold mb-1">Buscar concepto / ref.</label>
+                  <input id="flt-mov-txt" type="text" value="${escapeHtml(state.ui.movFilterTexto || '')}" oninput="updateMovFilters()" placeholder="Ej. Remesa, factura..." class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+                </div>
+              </div>
+            ` : ''}
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div class="min-w-0">
+                <h3 class="font-bold text-sm sm:text-base">Movimientos registrados (${list.length})</h3>
+                <p class="text-xs text-stone-500 dark:text-stone-400 break-words">
+                  Filtrado · Ingresos: <strong class="text-emerald-700 dark:text-emerald-400">${formatEur(filteredIng)}</strong> · Gastos: <strong class="text-red-700 dark:text-red-400">${formatEur(filteredGas)}</strong>
+                </p>
+              </div>
+
+              <div class="inline-flex rounded-2xl bg-stone-100 dark:bg-granate-950 p-1 border border-stone-200 dark:border-granate-800 text-xs shrink-0">
+                <button type="button" onclick="setMovFilter('TODOS')" class="px-3 py-1.5 rounded-xl font-bold transition ${filterTipo === 'TODOS' ? 'bg-oro-500 text-granate-950' : 'text-stone-600 dark:text-stone-300'}">
+                  Todos
+                </button>
+                <button type="button" onclick="setMovFilter('INGRESO')" class="px-3 py-1.5 rounded-xl font-bold transition ${filterTipo === 'INGRESO' ? 'bg-oro-500 text-granate-950' : 'text-stone-600 dark:text-stone-300'}">
+                  Ingresos
+                </button>
+                <button type="button" onclick="setMovFilter('GASTO')" class="px-3 py-1.5 rounded-xl font-bold transition ${filterTipo === 'GASTO' ? 'bg-oro-500 text-granate-950' : 'text-stone-600 dark:text-stone-300'}">
+                  Gastos
+                </button>
+              </div>
+            </div>
+
+            ${list.length === 0 ? `
+              <div class="py-8 text-center rounded-2xl border border-dashed border-stone-300 dark:border-granate-700 text-xs text-stone-500 dark:text-stone-400">
+                No hay movimientos que coincidan con los filtros seleccionados.
+              </div>
+            ` : `
+              <div class="divide-y divide-stone-100 dark:divide-granate-800">
+                ${list.map(m => {
+                  const isIngreso = m.tipo === 'INGRESO';
+                  return `
+                    <div
+                      class="py-3 px-2.5 rounded-2xl hover:bg-stone-50 dark:hover:bg-granate-950/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div class="min-w-0 flex-1 space-y-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${isIngreso ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'}">
+                            ${isIngreso ? 'Ingreso' : 'Gasto'}
+                          </span>
+                          <span class="text-xs font-semibold text-stone-500 dark:text-stone-400">${escapeHtml(formatDateEs(m.fecha))}</span>
+                          <span class="text-xs font-semibold text-granate-800 dark:text-oro-300">· ${escapeHtml(m.categoria)}</span>
+                        </div>
+                        <p class="font-bold text-xs sm:text-sm break-words leading-snug">${escapeHtml(m.concepto)}</p>
+                        <p class="text-[11px] text-stone-500 dark:text-stone-400 break-words">
+                          Cuenta: <strong>${escapeHtml(m.cuentaOrigen)}</strong>
+                          ${m.referencia ? ` · Ref: ${escapeHtml(m.referencia)}` : ''}
+                          ${m.observaciones ? ` · ${escapeHtml(m.observaciones)}` : ''}
+                        </p>
+                      </div>
+                      <div class="flex items-center justify-between sm:justify-end gap-2 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-stone-100 dark:border-granate-800/70 shrink-0">
+                        <span class="font-extrabold text-sm ${isIngreso ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}">
+                          ${isIngreso ? '+' : '-'}${formatEur(m.importe)}
+                        </span>
+                        <div class="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onclick="openMovimientoModal('${m.id}')"
+                            class="px-2.5 py-1 rounded-xl bg-stone-200 dark:bg-granate-800 text-xs font-semibold">
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onclick="deleteItemById('movimiento', '${m.id}')"
+                            class="px-2.5 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 text-xs font-semibold">
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    const CATEGORIAS_POR_TIPO = {
+      INGRESO: [
+        'Cuotas de hermanos',
+        'Donativos',
+        'Lotería',
+        'Otros ingresos',
+        'Remesas'
+      ],
+      GASTO: [
+        'Aire acondicionado',
+        'Alquiler de sillas y mesas',
+        'Compras y cenas',
+        'Gastos de reuniones',
+        'Gastos financieros',
+        'Gestión de remesas',
+        'Guardería',
+        'Hermandad',
+        'Montaje y desmontaje',
+        'Música',
+        'Otros gastos',
+        'Propinas',
+        'Seguridad'
+      ]
+    };
+
+    const CODIGO_CATEGORIA_MAP = {
+      '18': 'Otros gastos'
+    };
+
+    function normalizeCategoriaInput(rawCat, tipo = '') {
+      const s = String(rawCat || '').trim();
+      if (!s) return '';
+      if (CODIGO_CATEGORIA_MAP[s]) return CODIGO_CATEGORIA_MAP[s];
+      const all = [...CATEGORIAS_POR_TIPO.INGRESO, ...CATEGORIAS_POR_TIPO.GASTO];
+      const found = all.find(c => c.toLowerCase() === s.toLowerCase());
+      if (found) return found;
+      if (tipo && CATEGORIAS_POR_TIPO[tipo]) {
+        const foundByTipo = CATEGORIAS_POR_TIPO[tipo].find(c => c.toLowerCase() === s.toLowerCase());
+        if (foundByTipo) return foundByTipo;
+      }
+      return s;
+    }
+
+    function updateMovimientoCategoriaOptions(selectedCategoria = '') {
+      const tipoEl = document.getElementById('mov-tipo');
+      const catEl = document.getElementById('mov-categoria');
+      if (!tipoEl || !catEl) return;
+
+      const tipo = tipoEl.value;
+      const cats = CATEGORIAS_POR_TIPO[tipo] || [];
+      const currentVal = selectedCategoria || catEl.value || '';
+
+      if (!tipo) {
+        catEl.innerHTML = `<option value="">Selecciona primero el tipo...</option>`;
+        return;
+      }
+
+      let optionsHtml = `<option value="">Selecciona categoría...</option>`;
+      for (const c of cats) {
+        const isSel = c.toLowerCase() === currentVal.toLowerCase();
+        optionsHtml += `<option value="${escapeHtml(c)}" ${isSel ? 'selected' : ''}>${escapeHtml(c)}</option>`;
+      }
+
+      if (currentVal && !cats.some(c => c.toLowerCase() === currentVal.toLowerCase())) {
+        optionsHtml += `<option value="${escapeHtml(currentVal)}" selected>${escapeHtml(currentVal)}</option>`;
+      }
+
+      catEl.innerHTML = optionsHtml;
+    }
+
+    function openMovimientoModal(editId = null) {
+      const existing = editId ? state.movimientos.find(m => m.id === editId) : null;
+      const todayIso = new Date().toISOString().slice(0, 10);
+
+      const cuentaOptions = state.cuentas.length > 0
+        ? state.cuentas.map(c => `<option value="${escapeHtml(c.nombre)}"></option>`).join('')
+        : `<option value="Caja Principal"></option><option value="Cuenta Bancaria"></option>`;
+
+      openModal(
+        existing ? 'Editar movimiento' : 'Añadir nuevo movimiento',
+        `
+        <form id="form-nuevo-movimiento" onsubmit="submitMovimientoModal(event, ${editId ? `'${editId}'` : 'null'})" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label for="mov-fecha" class="block font-bold mb-1">Fecha *</label>
+            <input id="mov-fecha" name="fecha" type="date" value="${escapeHtml(existing?.fecha || todayIso)}" required class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+          </div>
+
+          <div>
+            <label for="mov-tipo" class="block font-bold mb-1">Tipo *</label>
+            <select id="mov-tipo" name="tipo" required onchange="updateMovimientoCategoriaOptions()" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500">
+              <option value="" ${!existing ? 'selected' : ''}>Selecciona tipo...</option>
+              <option value="INGRESO" ${existing?.tipo === 'INGRESO' ? 'selected' : ''}>Ingreso</option>
+              <option value="GASTO" ${existing?.tipo === 'GASTO' ? 'selected' : ''}>Gasto</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="mov-importe" class="block font-bold mb-1">Importe (€) *</label>
+            <input id="mov-importe" name="importe" type="number" step="0.01" min="0.01" value="${existing ? escapeHtml(String(existing.importe)) : ''}" placeholder="0.00" required class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+          </div>
+
+          <div>
+            <label for="mov-categoria" class="block font-bold mb-1">Categoría *</label>
+            <select id="mov-categoria" name="categoria" required class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500">
+              <option value="">Selecciona primero el tipo...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="mov-cuenta-origen" class="block font-bold mb-1">Cuenta de origen *</label>
+            <input id="mov-cuenta-origen" name="cuentaOrigen" type="text" list="cuentas-registradas" value="${escapeHtml(existing?.cuentaOrigen || '')}" placeholder="Selecciona o escribe cuenta" required class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+            <datalist id="cuentas-registradas">
+              ${cuentaOptions}
+            </datalist>
+          </div>
+
+          <div>
+            <label for="mov-concepto" class="block font-bold mb-1">Concepto *</label>
+            <input id="mov-concepto" name="concepto" type="text" value="${escapeHtml(existing?.concepto || '')}" placeholder="Descripción breve del movimiento" required class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+          </div>
+
+          <div>
+            <label for="mov-referencia" class="block font-bold mb-1">Referencia</label>
+            <input id="mov-referencia" name="referencia" type="text" value="${escapeHtml(existing?.referencia || '')}" placeholder="Nº factura, recibo o transferencia" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+          </div>
+
+          <div>
+            <label for="mov-observaciones" class="block font-bold mb-1">Observaciones</label>
+            <input id="mov-observaciones" name="observaciones" type="text" value="${escapeHtml(existing?.observaciones || '')}" placeholder="Notas adicionales" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 focus:outline-none focus:border-oro-500" />
+          </div>
+
+          <div class="sm:col-span-2 pt-1">
+            <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-sm shadow transition">
+              ${existing ? 'Guardar cambios' : 'Guardar movimiento'}
+            </button>
+          </div>
+        </form>
+        `
+      );
+      if (existing) {
+        updateMovimientoCategoriaOptions(existing.categoria || '');
+      }
+    }
+
+    function submitMovimientoModal(event, editId = null) {
+      event.preventDefault();
+      const fecha = (document.getElementById('mov-fecha')?.value || '').trim();
+      const tipo = (document.getElementById('mov-tipo')?.value || '').trim();
+      const importe = Number(document.getElementById('mov-importe')?.value);
+      const categoria = (document.getElementById('mov-categoria')?.value || '').trim();
+      const cuentaOrigen = (document.getElementById('mov-cuenta-origen')?.value || '').trim();
+      const concepto = (document.getElementById('mov-concepto')?.value || '').trim();
+      const referencia = (document.getElementById('mov-referencia')?.value || '').trim();
+      const observaciones = (document.getElementById('mov-observaciones')?.value || '').trim();
+
+      if (!fecha || !tipo || !(importe > 0) || !categoria || !cuentaOrigen || !concepto) {
+        showToast('Completa todos los campos obligatorios (*)', 'error');
+        return;
+      }
+
+      if (!state.cuentas.some(c => c.nombre.toLowerCase() === cuentaOrigen.toLowerCase())) {
+        state.cuentas.push({
+          id: `cta-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          nombre: cuentaOrigen,
+          tipo: 'Cuenta',
+          saldoInicial: 0,
+          notas: 'Creada automáticamente desde movimiento'
+        });
+      }
+
+      if (editId) {
+        const mov = state.movimientos.find(x => x.id === editId);
+        if (mov) {
+          Object.assign(mov, {
+            fecha,
+            tipo,
+            importe,
+            categoria,
+            cuentaOrigen,
+            concepto,
+            referencia,
+            observaciones
+          });
+        }
+        persistLocalState();
+        closeModal();
+        render();
+        showToast('Movimiento actualizado', 'success');
+      } else {
+        state.movimientos.unshift({
+          id: `mov-${Date.now()}`,
+          fecha,
+          tipo,
+          importe,
+          categoria,
+          cuentaOrigen,
+          concepto,
+          referencia,
+          observaciones
+        });
+        persistLocalState();
+        closeModal();
+        render();
+        showToast(`${tipo === 'INGRESO' ? 'Ingreso' : 'Gasto'} registrado`, 'success');
+      }
+    }
+
+    function updateMovFilters() {
+      const prevTxt = state.ui.movFilterTexto || '';
+      const activeTxtEl = document.getElementById('flt-mov-txt');
+      const cursorPos = activeTxtEl ? activeTxtEl.selectionStart : null;
+
+      state.ui.movFilterDesde = (document.getElementById('flt-mov-desde')?.value || '').trim();
+      state.ui.movFilterHasta = (document.getElementById('flt-mov-hasta')?.value || '').trim();
+      state.ui.movFilterCategoria = (document.getElementById('flt-mov-cat')?.value || '').trim();
+      state.ui.movFilterCuenta = (document.getElementById('flt-mov-cta')?.value || '').trim();
+      state.ui.movFilterTexto = activeTxtEl ? activeTxtEl.value : prevTxt;
+
+      persistLocalState(false);
+      render();
+
+      if (cursorPos !== null) {
+        const el = document.getElementById('flt-mov-txt');
+        if (el && document.activeElement !== el) {
+          el.focus();
+          try { el.setSelectionRange(cursorPos, cursorPos); } catch (_) {}
+        }
+      }
+    }
+
+    function resetMovFilters() {
+      state.ui.movFilterTipo = 'TODOS';
+      state.ui.movFilterDesde = '';
+      state.ui.movFilterHasta = '';
+      state.ui.movFilterCategoria = '';
+      state.ui.movFilterCuenta = '';
+      state.ui.movFilterTexto = '';
+      persistLocalState(false);
+      render();
+    }
+
+    function setMovFilter(tipo) {
+      state.ui.movFilterTipo = tipo;
+      persistLocalState(false);
+      render();
+    }
+
+    function openDeleteAllMovimientosModal() {
+      const total = state.movimientos.length;
+      if (total === 0) {
+        showToast('No hay movimientos para borrar');
+        return;
+      }
+      openModal(
+        'Borrar todos los movimientos',
+        `
+        <div class="space-y-4 text-xs">
+          <div class="p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-200 space-y-1">
+            <p class="font-extrabold text-sm">¿Seguro que quieres eliminar los ${total} movimiento(s)?</p>
+            <p>Esta acción vaciará por completo el historial de movimientos en este dispositivo (si quieres aplicarlo también en la nube, pulsa después <strong>↑ Publicar</strong>).</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 px-4 rounded-2xl bg-stone-200 dark:bg-granate-800 hover:bg-stone-300 dark:hover:bg-granate-700 font-bold">
+              Cancelar
+            </button>
+            <button type="button" onclick="confirmDeleteAllMovimientos()" class="flex-1 py-2.5 px-4 rounded-2xl bg-red-700 hover:bg-red-600 text-white font-extrabold shadow">
+              Sí, borrar todos
+            </button>
+          </div>
+        </div>
+        `
+      );
+    }
+
+    function confirmDeleteAllMovimientos() {
+      const count = state.movimientos.length;
+      state.movimientos = [];
+      persistLocalState();
+      closeModal();
+      render();
+      showToast(`Se han borrado ${count} movimiento(s)`, 'success');
+    }
+
+    // =========================================================================
+    // IMPORTACIÓN DESDE ARCHIVO CSV O TEXTO PEGADO
+    // =========================================================================
+    function parseCsvDate(val) {
+      const s = String(val || '').trim();
+      if (!s || s.toUpperCase() === 'NULL') return new Date().toISOString().slice(0, 10);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (m) {
+        return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+      }
+      return s;
+    }
+
+    function parseCsvAmount(val) {
+      let s = String(val || '').trim().replace(/€/g, '').replace(/\s+/g, '');
+      if (!s || s.toUpperCase() === 'NULL') return 0;
+      if (s.includes(',') && s.includes('.')) {
+        s = s.replace(/\./g, '').replace(',', '.');
+      } else if (s.includes(',')) {
+        s = s.replace(',', '.');
+      }
+      const n = Number(s);
+      return Number.isFinite(n) ? Math.abs(Math.round(n * 100) / 100) : 0;
+    }
+
+    function parseMovimientosFromCsv(rawText, defaultTipo = 'INGRESO') {
+      const lines = String(rawText || '')
+        .split(/\r\n|\r|\n/)
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+      if (!lines.length) return [];
+
+      const first = lines[0];
+      const semiCount = (first.match(/;/g) || []).length;
+      const commaCount = (first.match(/,/g) || []).length;
+      const tabCount = (first.match(/\t/g) || []).length;
+      let sep = ';';
+      if (tabCount >= semiCount && tabCount >= commaCount && tabCount > 0) sep = '\t';
+      else if (commaCount > semiCount) sep = ',';
+
+      const parseLine = (line) => {
+        const cols = [];
+        let cur = '';
+        let quoted = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') {
+            if (quoted && line[i + 1] === '"') {
+              cur += '"';
+              i++;
+            } else {
+              quoted = !quoted;
+            }
+          } else if (ch === sep && !quoted) {
+            cols.push(cur.trim());
+            cur = '';
+          } else {
+            cur += ch;
+          }
+        }
+        cols.push(cur.trim());
+        return cols;
+      };
+
+      const headerCells = parseLine(first).map(c => c.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+      const hasHeader = headerCells.some(h => ['fecha', 'tipo', 'importe', 'categoria', 'cuenta', 'cuenta_origen', 'concepto', 'referencia', 'observaciones'].includes(h));
+      const startIndex = hasHeader ? 1 : 0;
+
+      const idxMap = {};
+      if (hasHeader) {
+        headerCells.forEach((h, i) => {
+          if (h.includes('fecha')) idxMap.fecha = i;
+          else if (h === 'tipo') idxMap.tipo = i;
+          else if (h.includes('importe') || h.includes('eur') || h.includes('monto')) idxMap.importe = i;
+          else if (h.includes('categ')) idxMap.categoria = i;
+          else if (h.includes('cuenta')) idxMap.cuentaOrigen = i;
+          else if (h.includes('concepto') || h.includes('descrip')) idxMap.concepto = i;
+          else if (h.includes('ref')) idxMap.referencia = i;
+          else if (h.includes('obs') || h.includes('nota')) idxMap.observaciones = i;
+        });
+      }
+
+      const cleanCell = (v) => {
+        const s = String(v ?? '').trim();
+        return (!s || s.toUpperCase() === 'NULL') ? '' : s;
+      };
+
+      const items = [];
+      for (let i = startIndex; i < lines.length; i++) {
+        const cols = parseLine(lines[i]);
+        if (!cols.length || cols.every(c => !cleanCell(c))) continue;
+
+        let fecha, tipoRaw, importe, categoria, cuentaOrigen, concepto, referencia, observaciones;
+
+        let rawCat = '';
+        if (hasHeader && Object.keys(idxMap).length > 0) {
+          fecha = parseCsvDate(idxMap.fecha !== undefined ? cols[idxMap.fecha] : '');
+          tipoRaw = idxMap.tipo !== undefined ? cleanCell(cols[idxMap.tipo]) : '';
+          importe = parseCsvAmount(idxMap.importe !== undefined ? cols[idxMap.importe] : 0);
+          rawCat = idxMap.categoria !== undefined ? cleanCell(cols[idxMap.categoria]) : '';
+          cuentaOrigen = (idxMap.cuentaOrigen !== undefined ? cleanCell(cols[idxMap.cuentaOrigen]) : '') || 'Cuenta Bancaria';
+          concepto = (idxMap.concepto !== undefined ? cleanCell(cols[idxMap.concepto]) : '') || 'Movimiento CSV';
+          referencia = idxMap.referencia !== undefined ? cleanCell(cols[idxMap.referencia]) : '';
+          observaciones = idxMap.observaciones !== undefined ? cleanCell(cols[idxMap.observaciones]) : '';
+        } else {
+          fecha = parseCsvDate(cols[0] || '');
+          tipoRaw = cleanCell(cols[1] || '');
+          importe = parseCsvAmount(cols[2] || 0);
+          rawCat = cleanCell(cols[3] || '');
+          cuentaOrigen = cleanCell(cols[4] || '') || 'Cuenta Bancaria';
+          concepto = cleanCell(cols[5] || '') || 'Movimiento CSV';
+          referencia = cleanCell(cols[6] || '');
+          observaciones = cleanCell(cols[7] || '');
+        }
+
+        const tLow = tipoRaw.toLowerCase();
+        let tipo = defaultTipo;
+        if (tLow.startsWith('ing')) tipo = 'INGRESO';
+        else if (tLow.startsWith('gas')) tipo = 'GASTO';
+
+        categoria = normalizeCategoriaInput(rawCat, tipo) || (tipo === 'INGRESO' ? 'Otros ingresos' : 'Otros gastos');
+
+        if (importe > 0) {
+          items.push({
+            id: `csv-${Date.now()}-${i}-${Math.floor(Math.random() * 10000)}`,
+            fecha,
+            tipo,
+            importe,
+            categoria,
+            cuentaOrigen,
+            concepto,
+            referencia,
+            observaciones
+          });
+        }
+      }
+      return items;
+    }
+
+    function openImportCsvModal() {
+      openModal(
+        'Importar movimientos desde CSV',
+        `
+        <div class="space-y-3 text-xs">
+          <p class="text-stone-500 dark:text-stone-400">
+            Selecciona un archivo <strong>.csv</strong> o pega filas separadas por punto y coma (<code>;</code>) o coma (<code>,</code>).
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="csv-file-picker" class="block font-bold mb-1">Archivo CSV</label>
+              <input id="csv-file-picker" type="file" accept=".csv,.txt,text/csv,text/plain" onchange="handleCsvFileSelected(event)" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+            </div>
+            <div>
+              <label for="csv-default-tipo" class="block font-bold mb-1">Tipo por defecto (si no viene en el CSV)</label>
+              <select id="csv-default-tipo" onchange="updateCsvPreview()" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700">
+                <option value="INGRESO">Ingreso</option>
+                <option value="GASTO">Gasto</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="csv-raw-textarea" class="block font-bold mb-1">Contenido CSV</label>
+            <textarea id="csv-raw-textarea" rows="6" oninput="updateCsvPreview()" placeholder="fecha;tipo;importe;categoria;cuenta_origen;concepto;referencia;observaciones&#10;01/11/2026;INGRESO;350,00;Remesas y Cuotas;Cuenta Bancaria;Remesa noviembre;REF-01;" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700 font-mono"></textarea>
+          </div>
+          <div id="csv-preview-summary" class="px-3 py-2 rounded-2xl bg-stone-100 dark:bg-granate-900 font-bold text-granate-900 dark:text-oro-200">
+            0 filas válidas detectadas
+          </div>
+          <button type="button" onclick="confirmImportCsv()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-sm shadow">
+            Importar movimientos al listado
+          </button>
+        </div>
+        `
+      );
+    }
+
+    function handleCsvFileSelected(event) {
+      const file = event.target?.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const ta = document.getElementById('csv-raw-textarea');
+        if (ta) {
+          ta.value = String(reader.result || '');
+          updateCsvPreview();
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function updateCsvPreview() {
+      const raw = document.getElementById('csv-raw-textarea')?.value || '';
+      const defTipo = document.getElementById('csv-default-tipo')?.value || 'INGRESO';
+      const summaryEl = document.getElementById('csv-preview-summary');
+      if (!summaryEl) return;
+      const parsed = parseMovimientosFromCsv(raw, defTipo);
+      const total = parsed.reduce((s, x) => s + (Number(x.importe) || 0), 0);
+      summaryEl.textContent = parsed.length > 0
+        ? `${parsed.length} movimiento(s) listos para importar · Total: ${formatEur(total)}`
+        : '0 filas válidas detectadas';
+    }
+
+    function confirmImportCsv() {
+      const raw = document.getElementById('csv-raw-textarea')?.value || '';
+      const defTipo = document.getElementById('csv-default-tipo')?.value || 'INGRESO';
+      const parsed = parseMovimientosFromCsv(raw, defTipo);
+      if (!parsed.length) {
+        showToast('No se encontraron movimientos válidos en el CSV', 'error');
+        return;
+      }
+
+      for (const mov of parsed) {
+        if (mov.cuentaOrigen && !state.cuentas.some(c => c.nombre.toLowerCase() === mov.cuentaOrigen.toLowerCase())) {
+          state.cuentas.push({
+            id: `cta-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+            nombre: mov.cuentaOrigen,
+            tipo: 'Cuenta',
+            saldoInicial: 0,
+            notas: 'Creada automáticamente al importar CSV'
+          });
+        }
+      }
+
+      state.movimientos = [...parsed, ...state.movimientos];
+      persistLocalState();
+      closeModal();
+      render();
+      showToast(`Importados ${parsed.length} movimiento(s) desde CSV`, 'success');
+    }
+
+    // =========================================================================
+    // PESTAÑA 3: INFORMES Y GRÁFICAS
+    // =========================================================================
+    function renderEvolucionMensualCard(movs) {
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const monthMap = new Map();
+
+      for (const m of movs) {
+        const f = String(m.fecha || '').trim();
+        const ym = /^\d{4}-\d{2}/.test(f) ? f.slice(0, 7) : 'Sin fecha';
+        if (!monthMap.has(ym)) {
+          monthMap.set(ym, { ym, ingresos: 0, gastos: 0 });
+        }
+        const entry = monthMap.get(ym);
+        const imp = Number(m.importe) || 0;
+        if (m.tipo === 'INGRESO') entry.ingresos += imp;
+        else if (m.tipo === 'GASTO') entry.gastos += imp;
+      }
+
+      const series = Array.from(monthMap.values()).sort((a, b) => a.ym.localeCompare(b.ym));
+      const maxVal = Math.max(...series.flatMap(s => [s.ingresos, s.gastos]), 1);
+
+      const formatMonthLabel = (ym) => {
+        const match = ym.match(/^(\d{4})-(\d{2})$/);
+        if (!match) return ym;
+        const mIdx = Number(match[2]) - 1;
+        return `${monthNames[mIdx] || match[2]} ${match[1].slice(2)}`;
+      };
+
+      return `
+        <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <h3 class="font-bold text-sm text-granate-900 dark:text-oro-200">Evolución mensual de Ingresos y Gastos</h3>
+              <p class="text-[11px] text-stone-500 dark:text-stone-400">Comparativa por mes en el período seleccionado</p>
+            </div>
+            <div class="flex items-center gap-3 text-[11px] font-bold">
+              <span class="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                <span class="w-2.5 h-2.5 rounded-xs bg-emerald-600 inline-block"></span>
+                Ingresos
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-red-700 dark:text-red-400">
+                <span class="w-2.5 h-2.5 rounded-xs bg-red-600 dark:bg-oro-500 inline-block"></span>
+                Gastos
+              </span>
+            </div>
+          </div>
+
+          ${series.length === 0 ? `
+            <p class="text-xs text-stone-500 dark:text-stone-400">No hay movimientos registrados para mostrar la evolución mensual.</p>
+          ` : `
+            <div class="overflow-x-auto pb-1">
+              <div class="min-w-full inline-flex items-end gap-3 pt-4 px-2 border-b border-stone-200 dark:border-granate-800" style="min-height: 210px;">
+                ${series.map(item => {
+                  const ingPct = Math.round((item.ingresos / maxVal) * 100);
+                  const gasPct = Math.round((item.gastos / maxVal) * 100);
+                  const ingH = item.ingresos > 0 ? Math.max(8, Math.round((item.ingresos / maxVal) * 135)) : 2;
+                  const gasH = item.gastos > 0 ? Math.max(8, Math.round((item.gastos / maxVal) * 135)) : 2;
+                  return `
+                    <div class="flex-1 min-w-[68px] flex flex-col items-center gap-1.5">
+                      <div class="text-[10px] leading-tight text-center space-y-0.5 font-semibold">
+                        <div class="text-emerald-700 dark:text-emerald-400">+${formatEur(item.ingresos)}</div>
+                        <div class="text-red-700 dark:text-red-400">-${formatEur(item.gastos)}</div>
+                      </div>
+                      <div class="h-[140px] flex items-end justify-center gap-1.5 w-full">
+                        <div
+                          title="Ingresos ${formatMonthLabel(item.ym)}: ${formatEur(item.ingresos)} (${ingPct}%)"
+                          class="w-4 sm:w-5 rounded-t-lg bg-emerald-600 transition-all shadow-xs"
+                          style="height: ${ingH}px;">
+                        </div>
+                        <div
+                          title="Gastos ${formatMonthLabel(item.ym)}: ${formatEur(item.gastos)} (${gasPct}%)"
+                          class="w-4 sm:w-5 rounded-t-lg bg-red-600 dark:bg-oro-500 transition-all shadow-xs"
+                          style="height: ${gasH}px;">
+                        </div>
+                      </div>
+                      <span class="text-[11px] font-bold text-stone-700 dark:text-stone-200 whitespace-nowrap pb-1.5">
+                        ${escapeHtml(formatMonthLabel(item.ym))}
+                      </span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function renderInformesTab() {
+      const movs = getFilteredReportMovimientos();
+      const ingresosPer = movs.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+      const gastosPer = movs.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+      const balancePer = ingresosPer - gastosPer;
+      const maxComparativa = Math.max(ingresosPer, gastosPer, 1);
+
+      const catTotalsMap = new Map();
+      for (const m of movs.filter(x => x.tipo === 'GASTO')) {
+        const key = (m.categoria || 'Sin categoría').trim();
+        catTotalsMap.set(key, (catTotalsMap.get(key) || 0) + (Number(m.importe) || 0));
+      }
+      const gastosPorCategoria = Array.from(catTotalsMap.entries())
+        .map(([categoria, importe]) => ({ categoria, importe }))
+        .sort((a, b) => b.importe - a.importe);
+      const maxCat = Math.max(...gastosPorCategoria.map(x => x.importe), 1);
+
+      const cuentaNames = new Set([
+        ...state.cuentas.map(c => c.nombre),
+        ...movs.map(m => m.cuentaOrigen).filter(Boolean)
+      ]);
+      const tablaPorCuenta = Array.from(cuentaNames).map(nombre => {
+        const ctaObj = state.cuentas.find(c => c.nombre === nombre);
+        const saldoInicial = ctaObj ? (Number(ctaObj.saldoInicial) || 0) : 0;
+        const delMovs = movs.filter(m => m.cuentaOrigen === nombre);
+        const ing = delMovs.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        const gas = delMovs.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        return { nombre, saldoInicial, ing, gas, neto: saldoInicial + ing - gas };
+      });
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <button
+                type="button"
+                onclick="toggleReportFiltersAccordion()"
+                aria-expanded="${state.ui.reportFiltersExpanded !== false ? 'true' : 'false'}"
+                class="flex-1 text-left flex items-center justify-between gap-2 rounded-2xl py-1 pr-1 hover:opacity-90 transition min-w-0">
+                <div class="min-w-0">
+                  <h2 class="font-bold text-sm sm:text-base text-granate-900 dark:text-oro-200">Filtro de período del informe</h2>
+                  <p class="text-xs text-stone-500 dark:text-stone-400">
+                    ${state.ui.reportFiltersExpanded !== false ? 'Acota los cálculos, gráficas y el informe PDF por fechas' : ((state.ui.reportDesde || state.ui.reportHasta) ? 'Rango de fechas activo · Pulsar para expandir' : 'Pulsar para expandir filtro de fechas')}
+                  </p>
+                </div>
+                <span class="px-2.5 py-1.5 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-200 dark:border-granate-800 text-[11px] font-bold text-granate-900 dark:text-oro-200 flex items-center gap-1 shrink-0">
+                  <span>${state.ui.reportFiltersExpanded !== false ? 'Contraer' : 'Expandir'}</span>
+                  <svg class="w-3.5 h-3.5 transition-transform duration-200 ${state.ui.reportFiltersExpanded !== false ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </button>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onclick="generateAndShowPdfReport()"
+                  class="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 text-granate-950 font-extrabold text-xs shadow flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  Generar informe PDF
+                </button>
+                <button
+                  type="button"
+                  onclick="sendInformePdfViaWhatsApp()"
+                  class="px-3.5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow flex items-center gap-1.5">
+                  <span>WhatsApp</span>
+                </button>
+              </div>
+            </div>
+
+            ${state.ui.reportFiltersExpanded !== false ? `
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs items-end">
+                <div>
+                  <label for="rep-fecha-desde" class="block font-bold mb-1">Fecha desde</label>
+                  <input id="rep-fecha-desde" type="date" value="${escapeHtml(state.ui.reportDesde || '')}" onchange="updateReportDates()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700" />
+                </div>
+                <div>
+                  <label for="rep-fecha-hasta" class="block font-bold mb-1">Fecha hasta</label>
+                  <input id="rep-fecha-hasta" type="date" value="${escapeHtml(state.ui.reportHasta || '')}" onchange="updateReportDates()" class="w-full px-3 py-2 rounded-xl bg-stone-100 dark:bg-granate-950 border border-stone-300 dark:border-granate-700" />
+                </div>
+                <button type="button" onclick="clearReportDates()" class="py-2 px-3 rounded-xl bg-stone-200 dark:bg-granate-800 font-bold text-xs">
+                  Limpiar fechas
+                </button>
+              </div>
+            ` : ''}
+          </section>
+
+          <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Ingresos del período</span>
+              <span class="text-lg font-extrabold text-emerald-700 dark:text-emerald-400">${formatEur(ingresosPer)}</span>
+            </div>
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Gastos del período</span>
+              <span class="text-lg font-extrabold text-red-700 dark:text-red-400">${formatEur(gastosPer)}</span>
+            </div>
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Balance neto del período</span>
+              <span class="text-lg font-extrabold ${balancePer < 0 ? 'text-red-700 dark:text-red-400' : 'text-granate-900 dark:text-oro-300'}">${formatEur(balancePer)}</span>
+            </div>
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-granate-900 dark:text-oro-200">Comparativa Ingresos vs. Gastos</h3>
+            <div class="space-y-3 text-xs">
+              <div>
+                <div class="flex justify-between font-semibold mb-1">
+                  <span class="text-emerald-700 dark:text-emerald-400">Ingresos</span>
+                  <span>${formatEur(ingresosPer)}</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-stone-200 dark:bg-granate-950 overflow-hidden">
+                  <div class="h-full bg-emerald-600 rounded-full transition-all" style="width: ${Math.min(100, (ingresosPer / maxComparativa) * 100)}%"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between font-semibold mb-1">
+                  <span class="text-red-700 dark:text-red-400">Gastos</span>
+                  <span>${formatEur(gastosPer)}</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-stone-200 dark:bg-granate-950 overflow-hidden">
+                  <div class="h-full bg-granate-700 dark:bg-oro-500 rounded-full transition-all" style="width: ${Math.min(100, (gastosPer / maxComparativa) * 100)}%"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          ${renderEvolucionMensualCard(movs)}
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-granate-900 dark:text-oro-200">Gastos por categoría</h3>
+            ${gastosPorCategoria.length === 0 ? `
+              <p class="text-xs text-stone-500 dark:text-stone-400">No hay gastos registrados en este rango de fechas.</p>
+            ` : `
+              <div class="space-y-2.5 text-xs">
+                ${gastosPorCategoria.map(item => `
+                  <div>
+                    <div class="flex justify-between font-semibold mb-1">
+                      <span>${escapeHtml(item.categoria)}</span>
+                      <span class="text-granate-800 dark:text-oro-300">${formatEur(item.importe)}</span>
+                    </div>
+                    <div class="w-full h-2.5 rounded-full bg-stone-200 dark:bg-granate-950 overflow-hidden">
+                      <div class="h-full bg-oro-500 rounded-full" style="width: ${Math.min(100, (item.importe / maxCat) * 100)}%"></div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <h3 class="font-bold text-sm text-granate-900 dark:text-oro-200">Resumen por cuenta de origen</h3>
+            ${tablaPorCuenta.length === 0 ? `
+              <p class="text-xs text-stone-500 dark:text-stone-400">Sin cuentas ni movimientos en el período.</p>
+            ` : `
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-stone-200 dark:border-granate-800 text-stone-500 dark:text-stone-400">
+                      <th class="py-2 pr-2 font-bold">Cuenta</th>
+                      <th class="py-2 px-2 font-bold text-right">Ingresos</th>
+                      <th class="py-2 px-2 font-bold text-right">Gastos</th>
+                      <th class="py-2 pl-2 font-bold text-right">Saldo/Neto</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-stone-100 dark:divide-granate-800">
+                    ${tablaPorCuenta.map(row => `
+                      <tr>
+                        <td class="py-2 pr-2 font-semibold">${escapeHtml(row.nombre)}</td>
+                        <td class="py-2 px-2 text-right text-emerald-700 dark:text-emerald-400 font-semibold">${formatEur(row.ing)}</td>
+                        <td class="py-2 px-2 text-right text-red-700 dark:text-red-400 font-semibold">${formatEur(row.gas)}</td>
+                        <td class="py-2 pl-2 text-right font-extrabold text-granate-900 dark:text-oro-300">${formatEur(row.neto)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    function updateReportDates() {
+      state.ui.reportDesde = (document.getElementById('rep-fecha-desde')?.value || '').trim();
+      state.ui.reportHasta = (document.getElementById('rep-fecha-hasta')?.value || '').trim();
+      persistLocalState(false);
+      render();
+    }
+
+    function clearReportDates() {
+      state.ui.reportDesde = '';
+      state.ui.reportHasta = '';
+      persistLocalState(false);
+      render();
+    }
+
+    // =========================================================================
+    // GENERACIÓN DE PDF CON jsPDF + autoTable, VISOR Y ENVÍO POR WHATSAPP
+    // =========================================================================
+    function buildInformePdfDocument() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+      const movs = getFilteredReportMovimientos();
+      const ingresosPer = movs.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+      const gastosPer = movs.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+      const balancePer = ingresosPer - gastosPer;
+      const rangoTxt = (state.ui.reportDesde || state.ui.reportHasta)
+        ? `Período: ${state.ui.reportDesde ? formatDateEs(state.ui.reportDesde) : 'Inicio'} a ${state.ui.reportHasta ? formatDateEs(state.ui.reportHasta) : 'Hoy'}`
+        : 'Período: Todos los movimientos registrados';
+
+      doc.setFillColor(59, 10, 20);
+      doc.rect(0, 0, 595, 72, 'F');
+      doc.setTextColor(251, 191, 36);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.text('ASOCIACIÓN SANTA ANA-98 · INFORME ECONÓMICO', 40, 34);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`${rangoTxt} · Emitido: ${new Date().toLocaleDateString('es-ES')}`, 40, 54);
+
+      doc.autoTable({
+        startY: 88,
+        head: [['Total Ingresos', 'Total Gastos', 'Balance Neto']],
+        body: [[formatEur(ingresosPer), formatEur(gastosPer), formatEur(balancePer)]],
+        headStyles: { fillColor: [59, 10, 20], textColor: [251, 191, 36] },
+        styles: { fontSize: 10, cellPadding: 8 }
+      });
+
+      const movRows = movs.map(m => [
+        formatDateEs(m.fecha) || '',
+        m.tipo || '',
+        m.categoria || '',
+        m.cuentaOrigen || '',
+        m.concepto || '',
+        `${m.tipo === 'INGRESO' ? '+' : '-'}${formatEur(m.importe)}`
+      ]);
+
+      doc.autoTable({
+        startY: (doc.lastAutoTable?.finalY || 130) + 18,
+        head: [['Fecha', 'Tipo', 'Categoría', 'Cuenta', 'Concepto', 'Importe']],
+        body: movRows.length > 0 ? movRows : [['-', '-', '-', '-', 'Sin movimientos en el período', formatEur(0)]],
+        headStyles: { fillColor: [83, 11, 27], textColor: [253, 230, 138] },
+        styles: { fontSize: 8.5, cellPadding: 6 }
+      });
+
+      const filename = `Santa-Ana-98-Informe-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const summaryText = `*Asociación Santa Ana-98 · Informe Económico*\n${rangoTxt}\nIngresos: ${formatEur(ingresosPer)} · Gastos: ${formatEur(gastosPer)} · Balance: ${formatEur(balancePer)}`;
+
+      return { doc, blob: doc.output('blob'), rangoTxt, filename, summaryText };
+    }
+
+    async function generateAndShowPdfReport() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('No se cargó jsPDF en el navegador', 'error');
+        return;
+      }
+
+      const { blob, rangoTxt, filename, summaryText } = buildInformePdfDocument();
+      await openPdfInPopupWindow({
+        title: `Informe PDF · ${filename}`,
+        subtitle: rangoTxt,
+        blob,
+        filename,
+        summaryText,
+        onDownload: downloadGeneratedPdf
+      });
+    }
+
+    function sendInformePdfViaWhatsApp() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('No se cargó jsPDF en el navegador', 'error');
+        return;
+      }
+      const { blob, filename, summaryText } = buildInformePdfDocument();
+      lastGeneratedPdfBlob = blob;
+      lastGeneratedPdfMeta = {
+        filename,
+        summaryText,
+        downloadFn: downloadGeneratedPdf
+      };
+      downloadGeneratedPdf();
+      openWhatsAppWithText(`${summaryText}\nArchivo PDF: ${filename}`);
+      showToast('Informe PDF descargado · Abriendo WhatsApp', 'success');
+    }
+
+    function formatNumEsPlain(num) {
+      const n = Number(num) || 0;
+      return n.toLocaleString('es-ES', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function getPartidaActualizadoEfectivo(p) {
+      const previsto = Number(p?.importePrevisto) || 0;
+      const tieneActualizado = p?.importeActualizado !== undefined && p?.importeActualizado !== null && p?.importeActualizado !== '';
+      if (!tieneActualizado) return previsto;
+      const actNum = Number(p.importeActualizado);
+      if (!Number.isFinite(actNum)) return previsto;
+      if (actNum === 0 && previsto !== 0) return previsto;
+      return actNum;
+    }
+
+    function buildPresupuestoPdfDocument() {
+      const presSel = (state.ui.prevPresupuestoActivo || 'TODAS').trim();
+      const basePresList = (!presSel || presSel === 'TODAS')
+        ? state.presupuestos
+        : state.presupuestos.filter(p => getPartidaPresupuestoNombre(p).toLowerCase() === presSel.toLowerCase());
+      const ingresosList = basePresList.filter(p => p.tipo === 'INGRESO');
+      const gastosList = basePresList.filter(p => p.tipo === 'GASTO');
+
+      const totalIngresosPrev = ingresosList.reduce((s, p) => s + (Number(p.importePrevisto) || 0), 0);
+      const totalIngresosAct = ingresosList.reduce((s, p) => s + getPartidaActualizadoEfectivo(p), 0);
+
+      const totalGastosEstimado = gastosList.reduce((s, p) => s + (Number(p.importePrevisto) || 0), 0);
+      const totalGastosActualizado = gastosList.reduce((s, p) => s + getPartidaActualizadoEfectivo(p), 0);
+
+      const presupuestoTotalRef = totalGastosActualizado > 0 ? totalGastosActualizado : totalGastosEstimado;
+      const totalIngresosRef = totalIngresosAct > 0 ? totalIngresosAct : totalIngresosPrev;
+      const remanenteCalculado = totalIngresosRef - presupuestoTotalRef;
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 24;
+      const gap = 14;
+      const leftW = Math.floor((pageW - margin * 2 - gap) * 0.36);
+      const rightW = pageW - margin * 2 - gap - leftW;
+      const rightX = margin + leftW + gap;
+
+      doc.setFillColor(10, 10, 10);
+      doc.rect(margin, 18, pageW - margin * 2, 26, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      const yearMatch = presSel.match(/(\d{4})/);
+      const anioActual = yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+      const anioAnterior = anioActual - 1;
+      const etiquetaCabecera = (presSel && presSel !== 'TODAS')
+        ? presSel.toUpperCase()
+        : `TODOS LOS PRESUPUESTOS`;
+      const tituloPresupuesto = `${(state.meta?.asociacion || 'ASOCIACION SANTA ANA-98').toUpperCase()} PRESUPUESTO ${etiquetaCabecera}`;
+      doc.text(tituloPresupuesto, pageW / 2, 35, { align: 'center' });
+
+      const tableTopY = 54;
+
+      const ingBodyRows = ingresosList.length > 0
+        ? ingresosList.map(item => {
+            const valShow = getPartidaActualizadoEfectivo(item);
+            const conceptoTxt = `${(item.concepto || '').toUpperCase()}${item.notas ? ` (${item.notas})` : ''}`;
+            return [formatNumEsPlain(valShow), conceptoTxt];
+          })
+        : [['0,00', 'SIN PARTIDAS DE INGRESO']];
+
+      const totalIngShow = totalIngresosAct > 0 ? totalIngresosAct : totalIngresosPrev;
+      ingBodyRows.push([formatNumEsPlain(totalIngShow), '']);
+
+      doc.autoTable({
+        startY: tableTopY,
+        margin: { left: margin, right: pageW - (margin + leftW) },
+        tableWidth: leftW,
+        theme: 'grid',
+        head: [
+          [{ content: 'PRESUPUESTOS DE INGRESOS', colSpan: 2, styles: { fillColor: [10, 10, 10], textColor: [255, 255, 255], halign: 'center', fontStyle: 'bold', fontSize: 10, cellPadding: 7 } }],
+          [
+            { content: 'IMPORTES', styles: { fillColor: [255, 255, 255], textColor: [15, 15, 15], halign: 'center', fontStyle: 'bold', fontSize: 8.5 } },
+            { content: 'CONCEPTOS', styles: { fillColor: [255, 255, 255], textColor: [15, 15, 15], halign: 'center', fontStyle: 'bold', fontSize: 8.5 } }
+          ]
+        ],
+        body: ingBodyRows,
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          textColor: [15, 15, 15],
+          lineColor: [30, 30, 30],
+          lineWidth: 0.6,
+          cellPadding: 4.5,
+          valign: 'middle'
+        },
+        columnStyles: {
+          0: { halign: 'right', cellWidth: Math.floor(leftW * 0.34), fontStyle: 'normal' },
+          1: { halign: 'left', cellWidth: leftW - Math.floor(leftW * 0.34) }
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.row.index === ingBodyRows.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = 9;
+            data.cell.styles.fillColor = [245, 245, 245];
+          }
+        }
+      });
+
+      const gasBodyRows = gastosList.length > 0
+        ? gastosList.map(item => {
+            const estVal = Number(item.importePrevisto) || 0;
+            const actVal = getPartidaActualizadoEfectivo(item);
+            const conceptoTxt = `${(item.concepto || '').toUpperCase()}${item.notas ? ` (${item.notas})` : ''}`;
+            return [formatNumEsPlain(estVal), formatNumEsPlain(actVal), conceptoTxt];
+          })
+        : [['0,00', '0,00', 'SIN PARTIDAS DE GASTO']];
+
+      gasBodyRows.push([formatNumEsPlain(totalGastosEstimado), formatNumEsPlain(totalGastosActualizado), '']);
+
+      const colEstW = Math.floor(rightW * 0.16);
+      const colActW = Math.floor(rightW * 0.17);
+      const colConW = rightW - colEstW - colActW;
+
+      doc.autoTable({
+        startY: tableTopY,
+        margin: { left: rightX, right: margin },
+        tableWidth: rightW,
+        theme: 'grid',
+        head: [
+          [{ content: 'PRESUPUESTOS DE GASTOS', colSpan: 3, styles: { fillColor: [10, 10, 10], textColor: [255, 255, 255], halign: 'center', fontStyle: 'bold', fontSize: 10, cellPadding: 7 } }],
+          [
+            { content: `ESTIMADO\n${anioAnterior}`, styles: { fillColor: [255, 255, 255], textColor: [15, 15, 15], halign: 'center', fontStyle: 'bold', fontSize: 8 } },
+            { content: `ACTUALIZADO\n${anioActual}`, styles: { fillColor: [255, 255, 255], textColor: [15, 15, 15], halign: 'center', fontStyle: 'bold', fontSize: 8 } },
+            { content: 'CONCEPTOS', styles: { fillColor: [255, 255, 255], textColor: [15, 15, 15], halign: 'center', fontStyle: 'bold', fontSize: 8.5 } }
+          ]
+        ],
+        body: gasBodyRows,
+        styles: {
+          font: 'helvetica',
+          fontSize: 8,
+          textColor: [15, 15, 15],
+          lineColor: [30, 30, 30],
+          lineWidth: 0.6,
+          cellPadding: 4.5,
+          valign: 'middle'
+        },
+        columnStyles: {
+          0: { halign: 'right', cellWidth: colEstW },
+          1: { halign: 'right', cellWidth: colActW },
+          2: { halign: 'left', cellWidth: colConW }
+        },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.row.index === gasBodyRows.length - 1) {
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.fontSize = 9;
+            data.cell.styles.fillColor = [245, 245, 245];
+          }
+        }
+      });
+
+      const leftFinalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 360;
+      const bottomY = Math.max(leftFinalY, 260) + 14;
+      const boxW = Math.floor(rightW * 0.56);
+      const labelW = Math.floor(boxW * 0.56);
+
+      doc.setFillColor(10, 10, 10);
+      doc.rect(rightX, bottomY, boxW, 44, 'F');
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.7);
+      doc.line(rightX, bottomY + 22, rightX + boxW, bottomY + 22);
+      doc.line(rightX + labelW, bottomY, rightX + labelW, bottomY + 44);
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.text(`Presupuesto Feria ${anioActual}`, rightX + 8, bottomY + 14);
+      doc.text(`Remanente Feria ${anioActual + 1}`, rightX + 8, bottomY + 36);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.text(formatNumEsPlain(presupuestoTotalRef), rightX + boxW - 8, bottomY + 15, { align: 'right' });
+      doc.text(formatNumEsPlain(remanenteCalculado), rightX + boxW - 8, bottomY + 37, { align: 'right' });
+
+      const filename = `Santa-Ana-98-Presupuesto-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const summaryText = `*Asociación Santa Ana-98 · Presupuesto ${etiquetaCabecera}*\nIngresos: ${formatEur(totalIngShow)} · Gastos: ${formatEur(presupuestoTotalRef)} · Remanente: ${formatEur(remanenteCalculado)}`;
+
+      return { doc, blob: doc.output('blob'), etiquetaCabecera, count: basePresList.length, filename, summaryText };
+    }
+
+    async function generateAndShowPresupuestoPdf() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('No se cargó jsPDF en el navegador', 'error');
+        return;
+      }
+
+      const { blob, etiquetaCabecera, count, filename, summaryText } = buildPresupuestoPdfDocument();
+      await openPdfInPopupWindow({
+        title: `PDF Presupuesto · ${etiquetaCabecera}`,
+        subtitle: `${filename} (${count} partida(s))`,
+        blob,
+        filename,
+        summaryText,
+        onDownload: downloadGeneratedPresupuestoPdf
+      });
+    }
+
+    function sendPresupuestoPdfViaWhatsApp() {
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast('No se cargó jsPDF en el navegador', 'error');
+        return;
+      }
+      const { blob, filename, summaryText } = buildPresupuestoPdfDocument();
+      lastGeneratedPdfBlob = blob;
+      lastGeneratedPdfMeta = {
+        filename,
+        summaryText,
+        downloadFn: downloadGeneratedPresupuestoPdf
+      };
+      downloadGeneratedPresupuestoPdf();
+      openWhatsAppWithText(`${summaryText}\nArchivo PDF: ${filename}`);
+      showToast('PDF de presupuesto descargado · Abriendo WhatsApp', 'success');
+    }
+
+    async function triggerCompatiblePdfDownload(blob, filename, successMsg) {
+      if (!blob) return;
+      const ua = navigator.userAgent || '';
+      const isWebViewOrMobile = /Android|wv|WebView|iPhone|iPad|iPod/i.test(ua);
+
+      // 1. En Android WebView / APK (WebIntoApp), los enlaces blob: abren "Save as" sin nombre o fallan.
+      //    Web Share API con archivo o Data URI base64 evita el bloqueo de blob: en WebView.
+      try {
+        const pdfFile = new File([blob], filename, { type: 'application/pdf' });
+        if (isWebViewOrMobile && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+          await navigator.share({
+            files: [pdfFile],
+            title: filename
+          });
+          showToast(successMsg, 'success');
+          return;
+        }
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+      }
+
+      if (/Android|wv|WebView/i.test(ua)) {
+        try {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const dataUrl = String(reader.result || '');
+            if (!dataUrl) return;
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.setAttribute('download', filename);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast(successMsg, 'success');
+          };
+          reader.readAsDataURL(blob);
+          return;
+        } catch (_) {}
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 2500);
+      showToast(successMsg, 'success');
+    }
+
+    function downloadGeneratedPresupuestoPdf() {
+      if (!lastGeneratedPdfBlob) {
+        showToast('Primero genera el PDF del presupuesto', 'error');
+        return;
+      }
+      const filename = `Santa-Ana-98-Presupuesto-${new Date().toISOString().slice(0, 10)}.pdf`;
+      triggerCompatiblePdfDownload(lastGeneratedPdfBlob, filename, 'PDF de presupuesto descargado');
+    }
+
+    function downloadGeneratedPdf() {
+      if (!lastGeneratedPdfBlob) {
+        showToast('Primero genera el informe PDF', 'error');
+        return;
+      }
+      const filename = `Santa-Ana-98-Informe-${new Date().toISOString().slice(0, 10)}.pdf`;
+      triggerCompatiblePdfDownload(lastGeneratedPdfBlob, filename, 'PDF descargado');
+    }
+
+    // =========================================================================
+    // PESTAÑA 4: PREVISIONES Y PRESUPUESTOS
+    // =========================================================================
+    function getPartidaPresupuestoNombre(p) {
+      const raw = String(p?.presupuesto ?? p?.evento ?? '').trim();
+      return raw || 'Sin presupuesto asignado';
+    }
+
+    function getAllPresupuestosLabels() {
+      const baseDefaults = ['Feria 2025', 'Feria 2026', 'Feria 2027', 'Feria 2028', 'Feria 2029'];
+      const customList = Array.isArray(state.ui?.customPresupuestos) ? state.ui.customPresupuestos : [];
+      const fromItems = state.presupuestos.map(p => getPartidaPresupuestoNombre(p));
+      const deletedSet = new Set(
+        (Array.isArray(state.ui?.deletedPresupuestos) ? state.ui.deletedPresupuestos : [])
+          .map(x => String(x || '').trim().toLowerCase())
+      );
+
+      const mergedByLower = new Map();
+      for (const candidate of [...baseDefaults, ...customList, ...fromItems]) {
+        const clean = String(candidate || '').trim();
+        if (!clean) continue;
+        const low = clean.toLowerCase();
+        const hasActiveItems = state.presupuestos.some(
+          p => getPartidaPresupuestoNombre(p).toLowerCase() === low
+        );
+        if (!hasActiveItems && deletedSet.has(low)) continue;
+        if (!mergedByLower.has(low)) {
+          mergedByLower.set(low, clean);
+        }
+      }
+
+      return Array.from(mergedByLower.values()).sort((a, b) => a.localeCompare(b, 'es'));
+    }
+
+    function openEliminarPresupuestoModal(preselectedName = '') {
+      const disponibles = getAllPresupuestosLabels();
+      const targetDefault = preselectedName && preselectedName !== 'TODAS'
+        ? preselectedName
+        : (disponibles[0] || '');
+
+      if (!disponibles.length) {
+        showToast('No hay presupuestos creados para eliminar', 'error');
+        return;
+      }
+
+      openModal(
+        'Eliminar presupuesto',
+        `
+        <div class="space-y-3 text-xs">
+          <div>
+            <label for="del-pres-select" class="block font-bold mb-1">Selecciona el presupuesto a eliminar *</label>
+            <select id="del-pres-select" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700">
+              ${disponibles.map(lbl => `<option value="${escapeHtml(lbl)}" ${lbl.toLowerCase() === targetDefault.toLowerCase() ? 'selected' : ''}>${escapeHtml(lbl)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 text-red-900 dark:text-red-200">
+            <p class="font-bold">Atención</p>
+            <p class="mt-0.5">Se quitará este presupuesto de la lista y también se eliminarán las partidas asociadas a él. Podrás volver a crearlo cuando quieras con <strong>+ Nuevo presupuesto</strong>.</p>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 px-4 rounded-2xl bg-stone-200 dark:bg-granate-800 font-bold">
+              Cancelar
+            </button>
+            <button type="button" onclick="confirmEliminarPresupuesto()" class="flex-1 py-2.5 px-4 rounded-2xl bg-red-700 hover:bg-red-600 text-white font-extrabold shadow">
+              Eliminar presupuesto
+            </button>
+          </div>
+        </div>
+        `
+      );
+    }
+
+    function confirmEliminarPresupuesto() {
+      const target = (document.getElementById('del-pres-select')?.value || '').trim();
+      if (!target) {
+        showToast('Selecciona un presupuesto para eliminar', 'error');
+        return;
+      }
+      const targetLow = target.toLowerCase();
+
+      if (Array.isArray(state.ui.customPresupuestos)) {
+        state.ui.customPresupuestos = state.ui.customPresupuestos.filter(x => String(x || '').trim().toLowerCase() !== targetLow);
+      }
+
+      if (!Array.isArray(state.ui.deletedPresupuestos)) {
+        state.ui.deletedPresupuestos = [];
+      }
+      if (!state.ui.deletedPresupuestos.some(x => String(x || '').trim().toLowerCase() === targetLow)) {
+        state.ui.deletedPresupuestos.push(target);
+      }
+
+      state.presupuestos = state.presupuestos.filter(p => getPartidaPresupuestoNombre(p).toLowerCase() !== targetLow);
+
+      if ((state.ui.prevPresupuestoActivo || '').toLowerCase() === targetLow) {
+        state.ui.prevPresupuestoActivo = 'TODAS';
+      }
+
+      persistLocalState();
+      closeModal();
+      render();
+      showToast(`Presupuesto "${target}" eliminado`, 'success');
+    }
+
+    function openNuevoPresupuestoModal() {
+      const existingLabels = getAllPresupuestosLabels();
+      const matchYears = existingLabels
+        .map(lbl => {
+          const m = String(lbl).match(/(\d{4})/);
+          return m ? Number(m[1]) : 0;
+        })
+        .filter(y => y > 0);
+      const nextYear = matchYears.length ? Math.max(...matchYears) + 1 : 2028;
+      const suggestedName = `Feria ${nextYear}`;
+
+      openModal(
+        'Crear nuevo presupuesto / feria',
+        `
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold mb-1">Nombre del presupuesto o evento *</label>
+            <input id="new-pres-nombre" type="text" value="${escapeHtml(suggestedName)}" placeholder="Ej. Feria 2028, Feria 2029..." class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <p class="text-[11px] text-stone-500 dark:text-stone-400">
+            Se añadirá a tus pestañas de presupuestos para que puedas crear partidas y generar su PDF de forma independiente.
+          </p>
+          <button type="button" onclick="confirmCreatePresupuesto()" class="w-full py-3 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-sm shadow">
+            Crear presupuesto
+          </button>
+        </div>
+        `
+      );
+    }
+
+    function confirmCreatePresupuesto() {
+      const rawName = (document.getElementById('new-pres-nombre')?.value || '').trim();
+      if (!rawName) {
+        showToast('Indica un nombre para el presupuesto', 'error');
+        return;
+      }
+      const finalName = rawName;
+      if (!Array.isArray(state.ui.customPresupuestos)) {
+        state.ui.customPresupuestos = [];
+      }
+      if (Array.isArray(state.ui.deletedPresupuestos)) {
+        state.ui.deletedPresupuestos = state.ui.deletedPresupuestos.filter(x => String(x || '').trim().toLowerCase() !== finalName.toLowerCase());
+      }
+      if (!state.ui.customPresupuestos.some(x => x.toLowerCase() === finalName.toLowerCase())) {
+        state.ui.customPresupuestos.push(finalName);
+      }
+      state.ui.prevPresupuestoActivo = finalName;
+      persistLocalState();
+      closeModal();
+      render();
+      showToast(`Presupuesto "${finalName}" creado`, 'success');
+    }
+
+    function getFilteredPresupuestosList() {
+      const sel = String(state.ui.prevPresupuestoActivo || 'TODAS').trim();
+      if (!sel || sel === 'TODAS') return state.presupuestos;
+      const selLow = sel.toLowerCase();
+      return state.presupuestos.filter(p => getPartidaPresupuestoNombre(p).toLowerCase() === selLow);
+    }
+
+    function setPrevPresupuestoFiltro(nombrePresupuesto) {
+      state.ui.prevPresupuestoActivo = String(nombrePresupuesto || 'TODAS').trim() || 'TODAS';
+      persistLocalState(false);
+      render();
+    }
+
+    function renderPrevisionesTab() {
+      const activePresupuesto = state.ui.prevPresupuestoActivo || 'TODAS';
+      const presupuestosDisponibles = getAllPresupuestosLabels();
+      const listaFiltrada = getFilteredPresupuestosList();
+
+      const ingresosPrev = listaFiltrada
+        .filter(p => p.tipo === 'INGRESO')
+        .reduce((s, p) => s + (Number(p.importePrevisto) || 0), 0);
+      const gastosPrev = listaFiltrada
+        .filter(p => p.tipo === 'GASTO')
+        .reduce((s, p) => s + (Number(p.importePrevisto) || 0), 0);
+      const balancePrevisto = ingresosPrev - gastosPrev;
+
+      const ingresosAct = listaFiltrada
+        .filter(p => p.tipo === 'INGRESO')
+        .reduce((s, p) => s + getPartidaActualizadoEfectivo(p), 0);
+      const gastosAct = listaFiltrada
+        .filter(p => p.tipo === 'GASTO')
+        .reduce((s, p) => s + getPartidaActualizadoEfectivo(p), 0);
+      const balanceActualizado = ingresosAct - gastosAct;
+
+      return `
+        <div class="space-y-4 animate-fade">
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-2.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h2 class="font-bold text-sm text-granate-900 dark:text-oro-200">Presupuesto / Evento</h2>
+                <p class="text-[11px] text-stone-500 dark:text-stone-400">Separa y consulta previsiones por año o evento (Feria 2025, Feria 2026, Feria 2027, Feria 2028...)</p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-granate-900 text-oro-200 border border-oro-500/30">
+                  ${activePresupuesto === 'TODAS' ? `Todos (${state.presupuestos.length})` : `${escapeHtml(activePresupuesto)} (${listaFiltrada.length})`}
+                </span>
+                <button type="button" onclick="openNuevoPresupuestoModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 text-granate-950 font-extrabold text-xs shadow">
+                  + Nuevo presupuesto
+                </button>
+                <button type="button" onclick="openEliminarPresupuestoModal('${escapeHtml(activePresupuesto).replace(/'/g, "\\'")}')" class="px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 font-bold text-xs transition">
+                  Eliminar presupuesto
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 flex-wrap pt-1">
+              <button
+                type="button"
+                onclick="setPrevPresupuestoFiltro('TODAS')"
+                class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${activePresupuesto === 'TODAS' ? 'bg-oro-500 text-granate-950 shadow' : 'bg-stone-100 dark:bg-granate-950 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-granate-800'}">
+                Todos los presupuestos
+              </button>
+              ${presupuestosDisponibles.map(nombreP => {
+                const isSel = activePresupuesto.toLowerCase() === nombreP.toLowerCase();
+                return `
+                  <button
+                    type="button"
+                    onclick="setPrevPresupuestoFiltro('${escapeHtml(nombreP).replace(/'/g, "\\'")}')"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition ${isSel ? 'bg-oro-500 text-granate-950 shadow' : 'bg-stone-100 dark:bg-granate-950 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-granate-800'}">
+                    ${escapeHtml(nombreP)}
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </section>
+
+          <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Ingresos previstos</span>
+              <span class="text-lg font-extrabold text-emerald-700 dark:text-emerald-400">${formatEur(ingresosPrev)}</span>
+              <span class="text-[11px] text-stone-500 dark:text-stone-400 block mt-0.5">Actualizado: <strong class="text-emerald-700 dark:text-emerald-400">${formatEur(ingresosAct)}</strong></span>
+            </div>
+            <div class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 block">Gastos previstos</span>
+              <span class="text-lg font-extrabold text-red-700 dark:text-red-400">${formatEur(gastosPrev)}</span>
+              <span class="text-[11px] text-stone-500 dark:text-stone-400 block mt-0.5">Actualizado: <strong class="text-red-700 dark:text-red-400">${formatEur(gastosAct)}</strong></span>
+            </div>
+            <div class="bg-gradient-to-br from-granate-900 to-granate-800 text-white rounded-3xl p-4 border border-oro-500/40 shadow-sm">
+              <span class="text-xs font-semibold text-oro-300 block">Balance previsto</span>
+              <span class="text-lg font-extrabold ${balancePrevisto < 0 ? 'text-red-300' : 'text-oro-200'}">${formatEur(balancePrevisto)}</span>
+              <span class="text-[11px] text-oro-200/80 block mt-0.5">Actualizado: <strong>${formatEur(balanceActualizado)}</strong></span>
+            </div>
+          </section>
+
+          <section class="bg-white dark:bg-granate-900/90 rounded-3xl p-4 border border-stone-200 dark:border-oro-500/25 shadow-sm space-y-3">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h2 class="font-bold text-sm sm:text-base text-granate-900 dark:text-oro-200">Partidas presupuestarias (${listaFiltrada.length})</h2>
+                <p class="text-xs text-stone-500 dark:text-stone-400">Mostrando: ${activePresupuesto === 'TODAS' ? 'Todos los presupuestos' : escapeHtml(activePresupuesto)}</p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="generateAndShowPresupuestoPdf()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-granate-900 to-granate-800 hover:from-granate-800 hover:to-granate-700 text-oro-200 border border-oro-500/40 font-extrabold text-xs shadow flex items-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  Imprimir PDF presupuesto
+                </button>
+                <button type="button" onclick="sendPresupuestoPdfViaWhatsApp()" class="px-3 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow flex items-center gap-1">
+                  <span>WhatsApp</span>
+                </button>
+                <button type="button" onclick="openPresupuestoModal()" class="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 hover:from-oro-300 hover:to-oro-400 text-granate-950 font-extrabold text-xs shadow">
+                  + Nueva partida
+                </button>
+              </div>
+            </div>
+
+            ${listaFiltrada.length === 0 ? `
+              <div class="py-8 text-center rounded-2xl border border-dashed border-stone-300 dark:border-granate-700 text-xs text-stone-500 dark:text-stone-400">
+                No hay partidas en este presupuesto todavía. Pulsa <strong>+ Nueva partida</strong> para añadir ingresos o gastos previstos.
+              </div>
+            ` : `
+              <div class="divide-y divide-stone-100 dark:divide-granate-800">
+                ${listaFiltrada.map(p => {
+                  const isIngreso = p.tipo === 'INGRESO';
+                  const hasAct = p.importeActualizado !== undefined && p.importeActualizado !== null && p.importeActualizado !== '';
+                  const etiquetaPres = getPartidaPresupuestoNombre(p);
+                  return `
+                    <div
+                      class="py-3 px-2.5 rounded-2xl hover:bg-stone-50 dark:hover:bg-granate-950/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div class="min-w-0 flex-1 space-y-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-granate-900 text-oro-200 dark:bg-oro-500/20 dark:text-oro-300">
+                            ${escapeHtml(etiquetaPres)}
+                          </span>
+                          <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${isIngreso ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'}">
+                            ${isIngreso ? 'Ingreso' : 'Gasto'}
+                          </span>
+                          <span class="text-xs text-stone-500 dark:text-stone-400">${escapeHtml(p.categoria || 'General')}</span>
+                        </div>
+                        <p class="font-bold text-xs sm:text-sm break-words leading-snug">${escapeHtml(p.concepto)}</p>
+                        ${p.notas ? `<p class="text-[11px] text-stone-500 break-words">${escapeHtml(p.notas)}</p>` : ''}
+                      </div>
+                      <div class="flex items-center justify-between sm:justify-end gap-2 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-stone-100 dark:border-granate-800/70 shrink-0">
+                        <div class="text-left sm:text-right">
+                          <span class="font-extrabold text-sm block ${isIngreso ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}">
+                            Prev: ${formatEur(p.importePrevisto)}
+                          </span>
+                          ${hasAct ? `
+                            <span class="text-[11px] font-semibold text-granate-800 dark:text-oro-300 block">
+                              Act: ${formatEur(p.importeActualizado)}
+                            </span>
+                          ` : ''}
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                          <button type="button" onclick="openPresupuestoModal('${p.id}')" class="px-2.5 py-1 rounded-xl bg-stone-200 dark:bg-granate-800 text-xs font-semibold">
+                            Editar
+                          </button>
+                          <button type="button" onclick="deleteItemById('presupuesto', '${p.id}')" class="px-2.5 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-950 dark:hover:bg-red-900 dark:text-red-300 text-xs font-semibold">
+                            Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </section>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // MODALES DE ALTA / EDICIÓN PARA CUENTAS Y PARTIDAS PRESUPUESTARIAS
+    // =========================================================================
+    function openModal(title, htmlContent) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = htmlContent;
+      const bd = document.getElementById('modal-backdrop');
+      bd.classList.remove('hidden');
+      bd.classList.add('flex');
+    }
+
+    function closeModal() {
+      const bd = document.getElementById('modal-backdrop');
+      bd.classList.add('hidden');
+      bd.classList.remove('flex');
+    }
+
+    function openCuentaModal(editId = null) {
+      const existing = editId ? state.cuentas.find(c => c.id === editId) : null;
+      openModal(
+        existing ? 'Editar cuenta' : 'Nueva cuenta',
+        `
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block font-bold mb-1">Nombre de la cuenta *</label>
+            <input id="cta-nombre" type="text" value="${escapeHtml(existing?.nombre || '')}" placeholder="Ej. Cuenta Bancaria o Caja Efectivo" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Tipo</label>
+            <select id="cta-tipo" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700">
+              <option value="Banco" ${existing?.tipo === 'Banco' ? 'selected' : ''}>Banco</option>
+              <option value="Caja" ${existing?.tipo === 'Caja' ? 'selected' : ''}>Caja</option>
+              <option value="Cuenta" ${(!existing || existing?.tipo === 'Cuenta') ? 'selected' : ''}>Cuenta</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold mb-1">Saldo (€)</label>
+              <input id="cta-saldo" type="number" step="0.01" value="${existing ? existing.saldoInicial : 0}" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Fecha del saldo (opcional)</label>
+              <input id="cta-fecha-saldo" type="date" value="${escapeHtml(existing?.fechaSaldo || '')}" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+            </div>
+          </div>
+          <p class="text-[11px] text-stone-500 dark:text-stone-400">
+            Si indicas una fecha concreta, ese importe se tomará como saldo real en esa fecha y solo se sumarán o restarán los movimientos posteriores.
+          </p>
+          <div>
+            <label class="block font-bold mb-1">Notas</label>
+            <input id="cta-notas" type="text" value="${escapeHtml(existing?.notas || '')}" placeholder="Opcional" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <button type="button" onclick="saveCuenta(${editId ? `'${editId}'` : 'null'})" class="w-full py-3 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-sm shadow mt-2">
+            Guardar cuenta
+          </button>
+        </div>
+        `
+      );
+    }
+
+    function saveCuenta(editId) {
+      const nombre = (document.getElementById('cta-nombre')?.value || '').trim();
+      const tipo = (document.getElementById('cta-tipo')?.value || 'Cuenta').trim();
+      const saldoInicial = Number(document.getElementById('cta-saldo')?.value) || 0;
+      const fechaSaldo = (document.getElementById('cta-fecha-saldo')?.value || '').trim();
+      const notas = (document.getElementById('cta-notas')?.value || '').trim();
+
+      if (!nombre) {
+        showToast('Indica un nombre de cuenta', 'error');
+        return;
+      }
+
+      if (editId) {
+        const cta = state.cuentas.find(x => x.id === editId);
+        if (cta) {
+          const oldName = cta.nombre;
+          cta.nombre = nombre;
+          cta.tipo = tipo;
+          cta.saldoInicial = saldoInicial;
+          cta.fechaSaldo = fechaSaldo;
+          cta.notas = notas;
+          if (oldName !== nombre) {
+            state.movimientos.forEach(m => {
+              if (m.cuentaOrigen === oldName) m.cuentaOrigen = nombre;
+            });
+          }
+        }
+      } else {
+        state.cuentas.push({
+          id: `cta-${Date.now()}`,
+          nombre,
+          tipo,
+          saldoInicial,
+          fechaSaldo,
+          notas
+        });
+      }
+
+      persistLocalState();
+      closeModal();
+      render();
+      showToast('Cuenta guardada', 'success');
+    }
+
+    function openEstadoCuentasModal() {
+      const totals = getGlobalTotals();
+      const fechaHoy = new Date().toLocaleDateString('es-ES');
+
+      const filasCuentas = state.cuentas.map(c => {
+        const fechaCorte = (c.fechaSaldo || '').trim();
+        const movsCuenta = state.movimientos.filter(m => {
+          if (m.cuentaOrigen !== c.nombre) return false;
+          if (fechaCorte && m.fecha && m.fecha <= fechaCorte) return false;
+          return true;
+        });
+        const ing = movsCuenta.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        const gas = movsCuenta.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        const saldoAct = getCuentaSaldo(c);
+        return {
+          nombre: c.nombre,
+          tipo: c.tipo || 'Cuenta',
+          saldoRef: Number(c.saldoInicial) || 0,
+          fechaCorte: fechaCorte ? formatDateEs(fechaCorte) : 'Inicio',
+          ing,
+          gas,
+          saldoAct
+        };
+      });
+
+      openModal(
+        'Estado de cuentas actual',
+        `
+        <div class="space-y-4 text-xs">
+          <div class="flex items-center justify-between gap-2 flex-wrap bg-stone-100 dark:bg-granate-900 p-3 rounded-2xl">
+            <div>
+              <p class="font-extrabold text-granate-900 dark:text-oro-200">Asociación Santa Ana-98</p>
+              <p class="text-[11px] text-stone-500 dark:text-stone-400">Fecha de emisión: ${fechaHoy}</p>
+            </div>
+            <button type="button" onclick="printEstadoCuentas()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold shadow flex items-center gap-1.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Imprimir estado de cuentas
+            </button>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2">
+            <div class="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800">
+              <span class="block text-[11px] text-stone-500 dark:text-stone-400">Total Ingresos</span>
+              <span class="font-extrabold text-emerald-700 dark:text-emerald-400">${formatEur(totals.totalIngresos)}</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800">
+              <span class="block text-[11px] text-stone-500 dark:text-stone-400">Total Gastos</span>
+              <span class="font-extrabold text-red-700 dark:text-red-400">${formatEur(totals.totalGastos)}</span>
+            </div>
+            <div class="p-3 rounded-2xl bg-granate-900 text-white border border-oro-500/40">
+              <span class="block text-[11px] text-oro-300">Saldo Total Actual</span>
+              <span class="font-extrabold text-oro-200">${formatEur(totals.saldoTotal)}</span>
+            </div>
+          </div>
+
+          ${filasCuentas.length === 0 ? `
+            <p class="text-center py-6 text-stone-500">No hay cuentas registradas todavía.</p>
+          ` : `
+            <div class="overflow-x-auto rounded-2xl border border-stone-200 dark:border-granate-800">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead class="bg-stone-100 dark:bg-granate-900 text-stone-600 dark:text-oro-200">
+                  <tr>
+                    <th class="p-2.5 font-bold">Cuenta</th>
+                    <th class="p-2.5 font-bold">Saldo ref. (fecha)</th>
+                    <th class="p-2.5 font-bold text-right">Ingresos post.</th>
+                    <th class="p-2.5 font-bold text-right">Gastos post.</th>
+                    <th class="p-2.5 font-bold text-right">Saldo actual</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-100 dark:divide-granate-800">
+                  ${filasCuentas.map(r => `
+                    <tr>
+                      <td class="p-2.5 font-bold">${escapeHtml(r.nombre)} <span class="text-[10px] font-normal text-stone-500">(${escapeHtml(r.tipo)})</span></td>
+                      <td class="p-2.5">${formatEur(r.saldoRef)} <span class="text-[10px] text-stone-500">(${escapeHtml(r.fechaCorte)})</span></td>
+                      <td class="p-2.5 text-right text-emerald-700 dark:text-emerald-400 font-semibold">+${formatEur(r.ing)}</td>
+                      <td class="p-2.5 text-right text-red-700 dark:text-red-400 font-semibold">-${formatEur(r.gas)}</td>
+                      <td class="p-2.5 text-right font-extrabold text-granate-900 dark:text-oro-300">${formatEur(r.saldoAct)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `}
+        </div>
+        `
+      );
+    }
+
+    function printEstadoCuentas() {
+      const totals = getGlobalTotals();
+      const fechaHoy = new Date().toLocaleDateString('es-ES');
+      const filasHtml = state.cuentas.map(c => {
+        const fechaCorte = (c.fechaSaldo || '').trim();
+        const movsCuenta = state.movimientos.filter(m => {
+          if (m.cuentaOrigen !== c.nombre) return false;
+          if (fechaCorte && m.fecha && m.fecha <= fechaCorte) return false;
+          return true;
+        });
+        const ing = movsCuenta.filter(m => m.tipo === 'INGRESO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        const gas = movsCuenta.filter(m => m.tipo === 'GASTO').reduce((s, m) => s + (Number(m.importe) || 0), 0);
+        const saldoAct = getCuentaSaldo(c);
+        return `
+          <tr>
+            <td><strong>${escapeHtml(c.nombre)}</strong> (${escapeHtml(c.tipo || 'Cuenta')})</td>
+            <td>${formatEur(c.saldoInicial)} (${escapeHtml(fechaCorte ? formatDateEs(fechaCorte) : 'Inicio')})</td>
+            <td style="text-align:right;color:#047857;">+${formatEur(ing)}</td>
+            <td style="text-align:right;color:#b91c1c;">-${formatEur(gas)}</td>
+            <td style="text-align:right;font-weight:bold;">${formatEur(saldoAct)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const win = window.open('', '_blank', 'width=850,height=700');
+      if (!win) {
+        showToast('Permite las ventanas emergentes para imprimir', 'error');
+        return;
+      }
+      win.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Estado de Cuentas · Asociación Santa Ana-98</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #1c1917; padding: 28px; }
+            .header { background: #3b0a14; color: #fde68a; padding: 18px 22px; border-radius: 10px; margin-bottom: 18px; }
+            .header h1 { margin: 0 0 4px 0; font-size: 18px; }
+            .header p { margin: 0; font-size: 12px; color: #f5f5f4; }
+            .kpis { display: flex; gap: 12px; margin-bottom: 18px; }
+            .kpi { flex: 1; border: 1px solid #d6d3d1; border-radius: 8px; padding: 12px; }
+            .kpi span { display: block; font-size: 11px; color: #57534e; }
+            .kpi strong { font-size: 16px; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th, td { border-bottom: 1px solid #e7e5e4; padding: 10px 8px; text-align: left; }
+            th { background: #f5f5f4; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>ASOCIACIÓN SANTA ANA-98 · ESTADO DE CUENTAS ACTUAL</h1>
+            <p>Emitido el ${fechaHoy}</p>
+          </div>
+          <div class="kpis">
+            <div class="kpi"><span>Total Ingresos</span><strong style="color:#047857;">${formatEur(totals.totalIngresos)}</strong></div>
+            <div class="kpi"><span>Total Gastos</span><strong style="color:#b91c1c;">${formatEur(totals.totalGastos)}</strong></div>
+            <div class="kpi"><span>Saldo Total Actual</span><strong style="color:#3b0a14;">${formatEur(totals.saldoTotal)}</strong></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Cuenta</th>
+                <th>Saldo referencia (fecha)</th>
+                <th style="text-align:right;">Ingresos posteriores</th>
+                <th style="text-align:right;">Gastos posteriores</th>
+                <th style="text-align:right;">Saldo actual</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filasHtml || '<tr><td colspan="5">No hay cuentas registradas.</td></tr>'}
+            </tbody>
+          </table>
+          <script>window.onload = function() { window.print(); };<\/script>
+        </body>
+        </html>
+      `);
+      win.document.close();
+    }
+
+    function deleteItemById(kind, id) {
+      if (kind === 'cuenta') {
+        const item = state.cuentas.find(x => x.id === id);
+        if (!item) return;
+        state.cuentas = state.cuentas.filter(x => x.id !== id);
+        persistLocalState();
+        render();
+        showToast(`Cuenta eliminada: ${item.nombre}`, 'success');
+      } else if (kind === 'movimiento') {
+        const item = state.movimientos.find(x => x.id === id);
+        if (!item) return;
+        state.movimientos = state.movimientos.filter(x => x.id !== id);
+        persistLocalState();
+        render();
+        showToast(`Movimiento eliminado: ${item.concepto}`, 'success');
+      } else if (kind === 'presupuesto') {
+        const item = state.presupuestos.find(x => x.id === id);
+        if (!item) return;
+        state.presupuestos = state.presupuestos.filter(x => x.id !== id);
+        persistLocalState();
+        render();
+        showToast(`Partida eliminada: ${item.concepto}`, 'success');
+      }
+    }
+
+    function openPresupuestoModal(editId = null) {
+      const existing = editId ? state.presupuestos.find(p => p.id === editId) : null;
+      const defaultPres = existing
+        ? getPartidaPresupuestoNombre(existing)
+        : (state.ui.prevPresupuestoActivo && state.ui.prevPresupuestoActivo !== 'TODAS'
+            ? state.ui.prevPresupuestoActivo
+            : 'Feria 2026');
+      const sugerenciasPres = getAllPresupuestosLabels();
+      const valActualizado = existing && existing.importeActualizado !== undefined && existing.importeActualizado !== null && existing.importeActualizado !== ''
+        ? existing.importeActualizado
+        : '';
+      openModal(
+        existing ? 'Editar partida presupuestaria' : 'Nueva partida presupuestaria',
+        `
+        <div class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold mb-1">Presupuesto / Evento *</label>
+              <input id="pre-presupuesto" type="text" list="lista-presupuestos-sugeridos" value="${escapeHtml(defaultPres)}" placeholder="Ej. Feria 2026, Feria 2027..." class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+              <datalist id="lista-presupuestos-sugeridos">
+                ${sugerenciasPres.map(sp => `<option value="${escapeHtml(sp)}"></option>`).join('')}
+              </datalist>
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Tipo *</label>
+              <select id="pre-tipo" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700">
+                <option value="GASTO" ${(!existing || existing.tipo === 'GASTO') ? 'selected' : ''}>Gasto previsto</option>
+                <option value="INGRESO" ${existing?.tipo === 'INGRESO' ? 'selected' : ''}>Ingreso previsto</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Concepto / Partida *</label>
+            <input id="pre-concepto" type="text" value="${escapeHtml(existing?.concepto || '')}" placeholder="Ej. Remesas socios, Montaje caseta..." class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Categoría</label>
+            <input id="pre-cat" type="text" value="${escapeHtml(existing?.categoria || '')}" placeholder="Ej. Caseta, Cuotas, Música..." class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold mb-1">Importe previsto (€) *</label>
+              <input id="pre-importe" type="number" step="0.01" min="0" value="${existing ? existing.importePrevisto : ''}" placeholder="0.00" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+            </div>
+            <div>
+              <label class="block font-bold mb-1">Importe actualizado (€)</label>
+              <input id="pre-importe-actualizado" type="number" step="0.01" min="0" value="${escapeHtml(String(valActualizado))}" placeholder="0.00" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold mb-1">Notas</label>
+            <input id="pre-notas" type="text" value="${escapeHtml(existing?.notas || '')}" placeholder="Opcional" class="w-full px-3 py-2.5 rounded-xl bg-stone-100 dark:bg-granate-900 border border-stone-300 dark:border-granate-700" />
+          </div>
+          <button type="button" onclick="savePresupuesto(${editId ? `'${editId}'` : 'null'})" class="w-full py-3 rounded-2xl bg-gradient-to-r from-oro-400 to-oro-500 text-granate-950 font-extrabold text-sm shadow mt-2">
+            Guardar partida
+          </button>
+        </div>
+        `
+      );
+    }
+
+    function savePresupuesto(editId) {
+      const presupuesto = (document.getElementById('pre-presupuesto')?.value || '').trim();
+      if (!presupuesto) {
+        showToast('Indica el presupuesto o evento de la partida', 'error');
+        return;
+      }
+      const tipo = (document.getElementById('pre-tipo')?.value || 'GASTO').trim();
+      const concepto = (document.getElementById('pre-concepto')?.value || '').trim();
+      const categoria = (document.getElementById('pre-cat')?.value || 'General').trim();
+      const importePrevisto = Number(document.getElementById('pre-importe')?.value) || 0;
+      const rawAct = (document.getElementById('pre-importe-actualizado')?.value || '').trim();
+      const importeActualizado = rawAct === '' ? '' : (Number(rawAct) || 0);
+      const notas = (document.getElementById('pre-notas')?.value || '').trim();
+
+      if (!concepto) {
+        showToast('Indica el concepto de la partida', 'error');
+        return;
+      }
+
+      if (!Array.isArray(state.ui.customPresupuestos)) {
+        state.ui.customPresupuestos = [];
+      }
+      if (Array.isArray(state.ui.deletedPresupuestos)) {
+        state.ui.deletedPresupuestos = state.ui.deletedPresupuestos.filter(
+          x => String(x || '').trim().toLowerCase() !== presupuesto.toLowerCase()
+        );
+      }
+      if (!state.ui.customPresupuestos.some(x => x.toLowerCase() === presupuesto.toLowerCase())) {
+        state.ui.customPresupuestos.push(presupuesto);
+      }
+
+      if (editId) {
+        const item = state.presupuestos.find(x => x.id === editId);
+        if (item) Object.assign(item, { presupuesto, tipo, concepto, categoria, importePrevisto, importeActualizado, notas });
+      } else {
+        state.presupuestos.push({
+          id: `pre-${Date.now()}`,
+          presupuesto,
+          tipo,
+          concepto,
+          categoria,
+          importePrevisto,
+          importeActualizado,
+          notas
+        });
+      }
+
+      state.ui.prevPresupuestoActivo = presupuesto;
+      persistLocalState();
+      closeModal();
+      render();
+      showToast(`Partida guardada en ${presupuesto}`, 'success');
+    }
+
+    // =========================================================================
+    // RENDER PRINCIPAL E INICIALIZACIÓN
+    // =========================================================================
+    function render() {
+      renderNavHighlight();
+      const mainEl = document.getElementById('main-content');
+      switch (state.ui.activeTab) {
+        case 'movimientos':
+          mainEl.innerHTML = renderMovimientosTab();
+          break;
+        case 'informes':
+          mainEl.innerHTML = renderInformesTab();
+          break;
+        case 'previsiones':
+          mainEl.innerHTML = renderPrevisionesTab();
+          break;
+        case 'cuentas':
+        default:
+          mainEl.innerHTML = renderCuentasTab();
+          break;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await hydrateLocalState();
+      render();
+      if (navigator.onLine) {
+        pullFromSupabase(true);
+      }
+    });
+
+    window.addEventListener('online', () => {
+      showToast('Conexión restaurada · Sincronizando...', 'success');
+      if (isAutoSyncEnabled()) {
+        pushToSupabase(true);
+      } else {
+        pullFromSupabase(true);
+      }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && navigator.onLine && !autoSyncTimer) {
+        pullFromSupabase(true);
+      }
+    });
+  </script>
+</body>
+</html>
